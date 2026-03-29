@@ -4,7 +4,7 @@ package mimebuilder
 
 import (
 	"io"
-	// "fmt"
+	"fmt"
 )
 
 type Attachment struct {
