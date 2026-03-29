@@ -38,46 +38,64 @@ type MimeBuilder struct {
 
 
 func New() *MimeBuilder {
-	return &MimeBuilder{}
+	return &MimeBuilder{contentType: "text/plain"}
 }
 
-func (m *MimeBuilder) SetFrom( email string, name string ) *MimeBuilder {
+func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
+	m.from = fmt.Sprintf("%s <%s>", name, email)
 	return m
 }
 
-func (m *MimeBuilder) AddTo( email string, name string ) *MimeBuilder {
+func (m *MimeBuilder) AddTo(name string, email string) *MimeBuilder {
+	m.to = append(m.to, fmt.Sprintf("%s <%s>", name, email))
 	return m
 }
 
 func (m *MimeBuilder) AddCC( email string, name string ) *MimeBuilder {
+	m.cc = append(m.cc, fmt.Sprintf("%s <%s>", name, email))
 	return m
 }
 
 func (m *MimeBuilder) AddBCC( email string, name string ) *MimeBuilder {
+	m.bcc = append(m.bcc, fmt.Sprintf("%s <%s>", name, email))
 	return m
 }
 
 func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
+	m.replyTo = append(m.replyTo, fmt.Sprintf("%s <%s>", name, email))
 	return m
 }
 
-func (m *MimeBuilder) SetSubject(  ) *MimeBuilder {
+func (m *MimeBuilder) SetSubject(subject string) *MimeBuilder {
+	m.subject = subject
 	return m
 }
 
-func (m *MimeBuilder) SetBody(  ) *MimeBuilder {
+func (m *MimeBuilder) SetBody(content string) *MimeBuilder {
+	m.body = content
 	return m
 }
 
-func (m *MimeBuilder) AsHTML(  ) *MimeBuilder {
+func (m *MimeBuilder) AsHTML() *MimeBuilder {
+	m.contentType = "text/html"
 	return m
 }
 
-func (m *MimeBuilder) SetAltBody(  ) *MimeBuilder {
+func (m *MimeBuilder) SetAltBody( content string ) *MimeBuilder {
+	m.altBody = content
 	return m
 }
 
-func (m *MimeBuilder) Embed(  ) *MimeBuilder {
+// Embed adds an inline image (CID) using a byte slice.
+// name: The filename (e.g., "logo.png")
+// data: The raw bytes of the image
+// cid:  The unique ID used in HTML (e.g., "company_logo")
+func (m *MimeBuilder) Embed(name string, data []byte, cid string) *MimeBuilder {
+	m.inlineImages = append(m.inlineImages, InlineImage{
+		Filename:  name,
+		Data:      data,
+		ContentID: cid,
+	})
 	return m
 }
 
