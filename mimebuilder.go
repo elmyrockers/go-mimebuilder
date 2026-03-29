@@ -4,12 +4,13 @@ package mimebuilder
 
 import (
 	"io"
-	"fmt"
+	// "fmt"
 )
 
 type Attachment struct {
 	Filename 	string
-	Data 		io.Reader
+	Stream 		io.Reader
+	Data 		[]byte
 }
 
 type InlineImage struct {
@@ -40,23 +41,23 @@ func New() *MimeBuilder {
 	return &MimeBuilder{}
 }
 
-func (m *MimeBuilder) SetFrom(  ) *MimeBuilder {
+func (m *MimeBuilder) SetFrom( email string, name string ) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) AddTo(  ) *MimeBuilder {
+func (m *MimeBuilder) AddTo( email string, name string ) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) AddCC(  ) *MimeBuilder {
+func (m *MimeBuilder) AddCC( email string, name string ) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) AddBCC(  ) *MimeBuilder {
+func (m *MimeBuilder) AddBCC( email string, name string ) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) AddReplyTo(  ) *MimeBuilder {
+func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 	return m
 }
 
