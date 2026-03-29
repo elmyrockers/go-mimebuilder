@@ -99,7 +99,11 @@ func (m *MimeBuilder) Embed(name string, data []byte, cid string) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) Attach(  ) *MimeBuilder {
+func (m *MimeBuilder) Attach(filename string, data []byte) *MimeBuilder {
+	m.attachments = append(m.attachments, Attachment{
+		Filename: filename,
+		Data:     data,
+	})
 	return m
 }
 
