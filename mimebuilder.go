@@ -107,7 +107,19 @@ func (m *MimeBuilder) Attach(filename string, data []byte) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) Build(  ) *MimeBuilder {
+func (m *MimeBuilder) AttachReader(filename string, r io.Reader) *MimeBuilder {
+	m.attachments = append(m.attachments, Attachment{
+		Filename: filename,
+		Stream:   r,
+	})
+	return m
+}
+
+func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
+	return m.AttachReader(filename, r)
+}
+
+func (m *MimeBuilder) Build() *MimeBuilder {
 	return m
 }
 
