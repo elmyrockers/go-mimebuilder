@@ -5,7 +5,6 @@ package mimebuilder
 import (
 	"io"
 	"fmt"
-	"sync"
 )
 
 type Attachment struct {
