@@ -5,6 +5,7 @@ package mimebuilder
 import (
 	"io"
 	"fmt"
+	"sync"
 )
 
 type Attachment struct {
@@ -35,7 +36,6 @@ type MimeBuilder struct {
 
 	errorList 	[]error
 }
-
 
 func New() *MimeBuilder {
 	return &MimeBuilder{contentType: "text/plain"}
@@ -117,13 +117,6 @@ func (m *MimeBuilder) AttachReader(filename string, r io.Reader) *MimeBuilder {
 
 func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 	return m.AttachReader(filename, r)
-}
-
-
-var bufferPool = sync.Pool{
-	New: func() interface{} {
-		return bytes.NewBuffer(make([]byte, 0, 128*1024)) // Start with 128KB to handle 90% of business emails without reallocating
-	},
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
