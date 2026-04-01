@@ -27,9 +27,9 @@ type MimeBuilder struct {
 	bcc 		[]byte
 	replyTo 	[]byte
 
-	subject 	string
-	body 		string
-	altBody 	string
+	subject 	[]byte
+	body 		[]byte
+	altBody 	[]byte
 	isHTML 		bool
 
 	attachments 	[]Attachment
@@ -122,12 +122,14 @@ func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 }
 
 func (m *MimeBuilder) SetSubject(subject string) *MimeBuilder {
-	m.subject = subject
+	m.subject = m.subject[:0]
+	m.subject = append(m.subject, str2bytes(subject)...)
 	return m
 }
 
 func (m *MimeBuilder) SetBody(content string) *MimeBuilder {
-	m.body = content
+	m.body = m.body[:0]
+	m.body = append(m.body, str2bytes(content)...)
 	return m
 }
 
@@ -137,7 +139,8 @@ func (m *MimeBuilder) AsHTML() *MimeBuilder {
 }
 
 func (m *MimeBuilder) SetAltBody( content string ) *MimeBuilder {
-	m.altBody = content
+	m.altBody = m.altBody[:0]
+	m.altBody = append(m.altBody, str2bytes(content)...)
 	return m
 }
 
