@@ -30,7 +30,7 @@ type MimeBuilder struct {
 	subject 	string
 	body 		string
 	altBody 	string
-	contentType string
+	isHTML 		bool
 
 	attachments 	[]Attachment
 	inlineImages 	[]InlineImage
@@ -39,13 +39,14 @@ type MimeBuilder struct {
 }
 
 func New() *MimeBuilder {
-	return &MimeBuilder{contentType: "text/plain"}
+	return &MimeBuilder{isHTML: false}
 }
 
 // str2bytes() converts string to slice of byte without a memory allocation.
 func str2bytes(s string) []byte {
-	return *(*[]byte)(unsafe.Pointer(&s))
+    return unsafe.Slice(unsafe.StringData(s), len(s))
 }
+
 
 func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
 	// Reset the internal buffer (Keep the RAM, set length to 0)
@@ -131,7 +132,7 @@ func (m *MimeBuilder) SetBody(content string) *MimeBuilder {
 }
 
 func (m *MimeBuilder) AsHTML() *MimeBuilder {
-	m.contentType = "text/html"
+	m.isHTML = true
 	return m
 }
 
@@ -173,9 +174,9 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 	return m.AttachReader(filename, r)
 }
 
-// Generate boundaries: mixed, alternative and related
-func (m *MimeBuilder) generateBoundaries() ([]byte, []byte, []byte) {
-	return nil, nil, nil
+// Generate and set boundaries: mixed, alternative and related
+func (m *MimeBuilder) setBoundaries( mixed, alternative, related *[]byte ) {
+	// Fetch current entropy (Time ^ Salt ^ PID)
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
