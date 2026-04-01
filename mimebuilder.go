@@ -173,6 +173,11 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 	return m.AttachReader(filename, r)
 }
 
+// Generate boundaries: mixed, alternative and related
+func (m *MimeBuilder) generateBoundaries() ([]byte, []byte, []byte) {
+	return nil, nil, nil
+}
+
 func (m *MimeBuilder) Build() ([]byte, error) {
 	return nil,nil
 }
