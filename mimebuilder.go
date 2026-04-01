@@ -4,7 +4,9 @@ package mimebuilder
 
 import (
 	"io"
-	"fmt"
+	"unsafe"
+
+	// "github.com/valyala/bytebufferpool"
 )
 
 type Attachment struct {
@@ -19,11 +21,11 @@ type InlineImage struct {
 	ContentID 	string
 }
 type MimeBuilder struct {
-	from 		string
-	to 			[]string
-	cc 			[]string
-	bcc 		[]string
-	replyTo 	[]string
+	from 		[]byte
+	to 			[]byte
+	cc 			[]byte
+	bcc 		[]byte
+	replyTo 	[]byte
 
 	subject 	string
 	body 		string
@@ -40,29 +42,82 @@ func New() *MimeBuilder {
 	return &MimeBuilder{contentType: "text/plain"}
 }
 
+// str2bytes() converts string to slice of byte without a memory allocation.
+func str2bytes(s string) []byte {
+	return *(*[]byte)(unsafe.Pointer(&s))
+}
+
 func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
-	m.from = fmt.Sprintf("%s <%s>", name, email)
+	// Reset the internal buffer (Keep the RAM, set length to 0)
+		m.from = m.from[:0]
+
+	// Set name and email
+		m.from = append(m.from, str2bytes(name)...)
+		m.from = append(m.from, " <"...)
+		m.from = append(m.from, str2bytes(email)...)
+		m.from = append(m.from, ">"...)
+
 	return m
 }
 
 func (m *MimeBuilder) AddTo(name string, email string) *MimeBuilder {
-	m.to = append(m.to, fmt.Sprintf("%s <%s>", name, email))
-	return m
+	// Append comma to add new address
+		if len(m.to) > 0 {
+			m.to = append(m.to, ", "...)
+		}
+
+	// Set name and email
+	    m.to = append(m.to, str2bytes(name)...)
+	    m.to = append(m.to, " <"...)
+	    m.to = append(m.to, str2bytes(email)...)
+	    m.to = append(m.to, ">"...)
+	    
+	 return m
 }
 
 func (m *MimeBuilder) AddCC( email string, name string ) *MimeBuilder {
-	m.cc = append(m.cc, fmt.Sprintf("%s <%s>", name, email))
-	return m
+	// Append comma to add new address
+		if len(m.cc) > 0 {
+			m.cc = append(m.cc, ", "...)
+		}
+
+	// Set name and email
+	    m.cc = append(m.cc, str2bytes(name)...)
+	    m.cc = append(m.cc, " <"...)
+	    m.cc = append(m.cc, str2bytes(email)...)
+	    m.cc = append(m.cc, ">"...)
+	    
+	 return m
 }
 
 func (m *MimeBuilder) AddBCC( email string, name string ) *MimeBuilder {
-	m.bcc = append(m.bcc, fmt.Sprintf("%s <%s>", name, email))
-	return m
+	// Append comma to add new address
+		if len(m.bcc) > 0 {
+			m.bcc = append(m.bcc, ", "...)
+		}
+
+	// Set name and email
+	    m.bcc = append(m.bcc, str2bytes(name)...)
+	    m.bcc = append(m.bcc, " <"...)
+	    m.bcc = append(m.bcc, str2bytes(email)...)
+	    m.bcc = append(m.bcc, ">"...)
+	    
+	 return m
 }
 
 func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
-	m.replyTo = append(m.replyTo, fmt.Sprintf("%s <%s>", name, email))
-	return m
+	// Append comma to add new address
+		if len(m.replyTo) > 0 {
+			m.replyTo = append(m.replyTo, ", "...)
+		}
+
+	// Set name and email
+	    m.replyTo = append(m.replyTo, str2bytes(name)...)
+	    m.replyTo = append(m.replyTo, " <"...)
+	    m.replyTo = append(m.replyTo, str2bytes(email)...)
+	    m.replyTo = append(m.replyTo, ">"...)
+	    
+	 return m
 }
 
 func (m *MimeBuilder) SetSubject(subject string) *MimeBuilder {
@@ -119,8 +174,10 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
-	
+	return nil,nil
 }
+
+
 
 /*
 	CONSTRUCT----------
