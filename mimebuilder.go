@@ -12,7 +12,7 @@ import (
 	// "encoding/hex"
 	"encoding/binary"
 
-	// "github.com/valyala/bytebufferpool"
+	"github.com/valyala/bytebufferpool"
 )
 
 type Attachment struct {
@@ -305,9 +305,33 @@ func (m *MimeBuilder) setBoundaries() {
 
 ***************************/
 func (m *MimeBuilder) Build() ([]byte, error) {
+	// Borrow a high-performance buffer from the pool
+		buf := bytebufferpool.Get()
+		defer bytebufferpool.Put(buf)
+		
 	// Generate header
 		// (from, to, cc, bcc, reply-to)
+			buf.Write(str2bytes( "From: " ))
+			buf.Write(m.from[:])
+			buf.Write(str2bytes( "\nTo: " ))
+			buf.Write(m.to[:])
+			if len(m.cc)>0 {
+				buf.Write(str2bytes( "\nCc: " ))
+				buf.Write(m.cc[:])
+			}
+			if len(m.bcc)>0 {
+				buf.Write(str2bytes( "\nBcc: " ))
+				buf.Write(m.bcc[:])
+			}
+			if len(m.replyTo)>0 {
+				buf.Write(str2bytes( "\nReply-To: " ))
+				buf.Write(m.replyTo[:])
+			}
+			
 		// subject, mime-version
+			buf.Write(str2bytes( "\nSubject: " ))
+			buf.Write(m.subject[:])
+			buf.Write(str2bytes( "\nMIME-Version: 1.0" ))
 	// Generate body
 		// content-type (mixed, alt, rel, html, plain)
 		// Pre-allocate boundaries
@@ -323,10 +347,12 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 		// Plain-text
 			// Content-Type: text/plain; charset=UTF-8
 
+	fmt.Println("--- DEBUG START ---")
+	fmt.Println(buf.String())
+	fmt.Println("--- DEBUG END ---")
 
 
-
-	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alt, "\nRelated: ", rel )
+	fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
 	return nil,nil
 }
 
