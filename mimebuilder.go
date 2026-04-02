@@ -304,11 +304,15 @@ func (m *MimeBuilder) setBoundaries() {
 			--<mixedBoundary>--
 
 ***************************/
+func (m *MimeBuilder) buildMixed( buf *bytebufferpool.ByteBuffer ){
+	
+}
+
 func (m *MimeBuilder) Build() ([]byte, error) {
 	// Borrow a high-performance buffer from the pool
 		buf := bytebufferpool.Get()
 		defer bytebufferpool.Put(buf)
-		
+
 	// Generate header
 		// (from, to, cc, bcc, reply-to)
 			buf.Write(str2bytes( "From: " ))
@@ -327,16 +331,19 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 				buf.Write(str2bytes( "\nReply-To: " ))
 				buf.Write(m.replyTo[:])
 			}
-			
 		// subject, mime-version
 			buf.Write(str2bytes( "\nSubject: " ))
 			buf.Write(m.subject[:])
 			buf.Write(str2bytes( "\nMIME-Version: 1.0" ))
+
 	// Generate body
 		// content-type (mixed, alt, rel, html, plain)
 		// Pre-allocate boundaries
 			m.setBoundaries()
 		// mixed - if there is an attachment
+			if len(m.attachments)>0 {
+				
+			}
 			// Content-Type: multipart/mixed; boundary=
 		// alt - if there are both altBody & body (html)
 			// Content-Type: multipart/alternative; boundary=
