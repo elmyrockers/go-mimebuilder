@@ -5,7 +5,7 @@ package mimebuilder
 import (
 	"io"
 	"unsafe"
-	// "fmt"
+	"fmt"
 	"time"
 	"os"
 	"crypto/rand"
@@ -210,7 +210,8 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 }
 
 // Generate and set boundaries: mixed, alternative and related
-func setBoundaries( mixed, alternative, related *[]byte ) {
+// func setBoundaries( mixed, alternative, related *[]byte ) {
+func (m *MimeBuilder) setBoundaries() {
 	// Fetch current entropy (Time ^ Salt ^ PID)
 		var salt [16]byte
 		rand.Read( salt[:] )
@@ -246,15 +247,15 @@ func setBoundaries( mixed, alternative, related *[]byte ) {
 		
 	// Generate mixed, alternative & related boundaries
 		boundary[31] = '1'
-		copy( *mixed, boundary[:] )
+		copy( m.mixedBoundary[:], boundary[:] )
 
 		boundary[31] = 'a'
-		copy( *alternative, boundary[:] )
+		copy( m.altBoundary[:], boundary[:] )
 
 		boundary[31] = 'e'
-		copy( *related, boundary[:] )
+		copy( m.relBoundary[:], boundary[:] )
 
-	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alternative, "\nRelated: ", related )
+	// fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
 }
 
 /***************************
@@ -311,10 +312,11 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 	// Generate body
 		// content-type (mixed, alt, rel, html, plain)
 		// Pre-allocate boundaries
-			mixed := make([]byte, 32) 
-			alt   := make([]byte, 32)
-			rel   := make([]byte, 32)
-			setBoundaries( &mixed, &alt, &rel )
+			// mixed := make([]byte, 32) 
+			// alt   := make([]byte, 32)
+			// rel   := make([]byte, 32)
+			// setBoundaries( &mixed, &alt, &rel )
+			m.setBoundaries()
 		// mixed - if there is an attachment
 			// Content-Type: multipart/mixed; boundary=
 		// alt - if there are both altBody & body (html)
