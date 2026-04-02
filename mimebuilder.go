@@ -253,12 +253,71 @@ func setBoundaries( mixed, alternative, related *[]byte ) {
 	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alternative, "\nRelated: ", related )
 }
 
+/***************************
+		buildMixed()
+			--<mixedBoundary>
+			- call buildPlainText() or buildHtml() or buildAlternative()
+			- call buildAttachments()
+		buildAlternative()
+			- Content-Type: multipart/alternative; boundary="altBoundary"
+			- 
+			- call buildPlainText()
+			- call buildHtml() or buildRelated()
+		buildRelated()
+			- call buildHtml() & buildInlineImages( relatedBoundary )
+
+		buildPlainText()
+			Content-Type: text/plain; charset=UTF-8
+			Content-Transfer-Encoding: quoted-printable
+			Hello in plain text.
+
+		buildHtml()
+			Content-Type: text/html; charset=UTF-8
+			Content-Transfer-Encoding: quoted-printable
+			<html><body><p>Hello in HTML</p></body></html>
+
+		buildInlineImages( relatedBoundary )
+			--<relatedBoundary>
+			Content-Type: image/png; name="logo.png"
+			Content-Transfer-Encoding: base64
+			Content-Disposition: inline; filename="logo.png"
+			Content-ID: <company_logo>
+			<base64-encoded image data>
+			--<relatedBoundary>--
+
+		buildAttachments( mixedBoundary )
+			--<mixedBoundary>
+			Content-Type: application/pdf; name="report.pdf"
+			Content-Transfer-Encoding: base64
+			Content-Disposition: attachment; filename="report.pdf"
+			<base64-encoded data>
+			--<mixedBoundary>--
+
+***************************/
 func (m *MimeBuilder) Build() ([]byte, error) {
-	// var mixed, alt, rel []byte
-	mixed := make([]byte, 32) 
-	alt   := make([]byte, 32)
-	rel   := make([]byte, 32)
-	setBoundaries( &mixed, &alt, &rel )
+	// Generate header
+		// (from, to, cc, bcc, reply-to)
+		// subject, mime-version
+
+		// content-type (mixed, alt, rel, html, plain)
+			// Pre-allocate boundaries
+				mixed := make([]byte, 32) 
+				alt   := make([]byte, 32)
+				rel   := make([]byte, 32)
+				setBoundaries( &mixed, &alt, &rel )
+			// mixed - if there is an attachment
+				// Content-Type: multipart/mixed; boundary=
+			// alt - if there are both altBody & body (html)
+				// Content-Type: multipart/alternative; boundary=
+			// rel - if there are both body(html) & inline-image
+				// Content-Type: multipart/related; boundary=
+			// HTML
+				// Content-Type: text/html; charset=UTF-8
+			// Plain-text
+				// Content-Type: text/plain; charset=UTF-8
+
+	// Generate body
+
 
 	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alt, "\nRelated: ", rel )
 	return nil,nil
