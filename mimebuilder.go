@@ -210,7 +210,6 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 }
 
 // Generate and set boundaries: mixed, alternative and related
-// func setBoundaries() {
 func (m *MimeBuilder) setBoundaries() {
 	// Fetch current entropy (Time ^ Salt ^ PID)
 		var salt [16]byte
