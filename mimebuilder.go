@@ -5,6 +5,12 @@ package mimebuilder
 import (
 	"io"
 	"unsafe"
+	// "fmt"
+	"time"
+	"os"
+	"crypto/rand"
+	// "encoding/hex"
+	"encoding/binary"
 
 	// "github.com/valyala/bytebufferpool"
 )
@@ -44,7 +50,7 @@ func New() *MimeBuilder {
 
 // str2bytes() converts string to slice of byte without a memory allocation.
 func str2bytes(s string) []byte {
-    return unsafe.Slice(unsafe.StringData(s), len(s))
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 
@@ -68,11 +74,11 @@ func (m *MimeBuilder) AddTo(name string, email string) *MimeBuilder {
 		}
 
 	// Set name and email
-	    m.to = append(m.to, str2bytes(name)...)
-	    m.to = append(m.to, " <"...)
-	    m.to = append(m.to, str2bytes(email)...)
-	    m.to = append(m.to, ">"...)
-	    
+		m.to = append(m.to, str2bytes(name)...)
+		m.to = append(m.to, " <"...)
+		m.to = append(m.to, str2bytes(email)...)
+		m.to = append(m.to, ">"...)
+		
 	 return m
 }
 
@@ -83,11 +89,11 @@ func (m *MimeBuilder) AddCC( email string, name string ) *MimeBuilder {
 		}
 
 	// Set name and email
-	    m.cc = append(m.cc, str2bytes(name)...)
-	    m.cc = append(m.cc, " <"...)
-	    m.cc = append(m.cc, str2bytes(email)...)
-	    m.cc = append(m.cc, ">"...)
-	    
+		m.cc = append(m.cc, str2bytes(name)...)
+		m.cc = append(m.cc, " <"...)
+		m.cc = append(m.cc, str2bytes(email)...)
+		m.cc = append(m.cc, ">"...)
+		
 	 return m
 }
 
@@ -98,11 +104,11 @@ func (m *MimeBuilder) AddBCC( email string, name string ) *MimeBuilder {
 		}
 
 	// Set name and email
-	    m.bcc = append(m.bcc, str2bytes(name)...)
-	    m.bcc = append(m.bcc, " <"...)
-	    m.bcc = append(m.bcc, str2bytes(email)...)
-	    m.bcc = append(m.bcc, ">"...)
-	    
+		m.bcc = append(m.bcc, str2bytes(name)...)
+		m.bcc = append(m.bcc, " <"...)
+		m.bcc = append(m.bcc, str2bytes(email)...)
+		m.bcc = append(m.bcc, ">"...)
+		
 	 return m
 }
 
@@ -113,11 +119,11 @@ func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 		}
 
 	// Set name and email
-	    m.replyTo = append(m.replyTo, str2bytes(name)...)
-	    m.replyTo = append(m.replyTo, " <"...)
-	    m.replyTo = append(m.replyTo, str2bytes(email)...)
-	    m.replyTo = append(m.replyTo, ">"...)
-	    
+		m.replyTo = append(m.replyTo, str2bytes(name)...)
+		m.replyTo = append(m.replyTo, " <"...)
+		m.replyTo = append(m.replyTo, str2bytes(email)...)
+		m.replyTo = append(m.replyTo, ">"...)
+		
 	 return m
 }
 
@@ -178,11 +184,64 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 }
 
 // Generate and set boundaries: mixed, alternative and related
-func (m *MimeBuilder) setBoundaries( mixed, alternative, related *[]byte ) {
+func setBoundaries( mixed, alternative, related *[]byte ) {
 	// Fetch current entropy (Time ^ Salt ^ PID)
+		var salt [16]byte
+		rand.Read( salt[:] )
+		firstHalf := binary.LittleEndian.Uint64(salt[0:8])
+		secondHalf := binary.LittleEndian.Uint64(salt[8:16])
+
+		nanoTime := uint64(time.Now().UnixNano())
+		pid := uint32(os.Getpid())
+
+		firstHalf ^= nanoTime
+		secondHalf ^= (uint64(pid) << 32)
+
+		// fmt.Println( "Salt:",salt, "\nFirsthalf:", firstHalf, "\nSecondHalf:", secondHalf )
+
+	// 32-bytes of hex
+		// Encode FirstHalf (0-15)
+			const hexTable = "0123456789abcdef"
+			var boundary [32]byte
+			for i := 0; i < 8; i++ {
+				b := byte(firstHalf >> (i * 8))
+				boundary[i*2] = hexTable[b>>4]
+				boundary[i*2+1] = hexTable[b&0x0f]
+			}
+
+		// Encode SecondHalf (16-31)
+			for i := 0; i < 8; i++ {
+				b := byte(secondHalf >> (i * 8))
+				boundary[16+i*2] = hexTable[b>>4]
+				boundary[16+i*2+1] = hexTable[b&0x0f]
+			}
+
+		// fmt.Println( "\nBoundary: ", boundary, "\nBoundary String: ", string(boundary[:]) )
+		
+	// Generate mixed, alternative & related boundaries
+		boundary[31] = '1'
+		copy( *mixed, boundary[:] )
+		// *mixed = append([]byte(nil), boundary[:]...)
+
+		boundary[31] = 'a'
+		copy( *alternative, boundary[:] )
+		// *alternative = append([]byte(nil), boundary[:]...)
+
+		boundary[31] = 'e'
+		copy( *related, boundary[:] )
+		// *related = append([]byte(nil), boundary[:]...)
+
+	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alternative, "\nRelated: ", related )
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
+	// var mixed, alt, rel []byte
+	mixed := make([]byte, 32) 
+	alt   := make([]byte, 32)
+	rel   := make([]byte, 32)
+	setBoundaries( &mixed, &alt, &rel )
+
+	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alt, "\nRelated: ", rel )
 	return nil,nil
 }
 
