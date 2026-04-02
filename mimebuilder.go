@@ -274,7 +274,7 @@ func (m *MimeBuilder) setBoundaries() {
 			- Content-Type: multipart/related; boundary="relatedBoundary"
 			--<relatedBoundary>
 			- call buildHtml()
-			- call buildInlineImages( relatedBoundary )
+			- call buildInlineImages()
 
 		buildPlainText()
 			Content-Type: text/plain; charset=UTF-8
@@ -286,7 +286,7 @@ func (m *MimeBuilder) setBoundaries() {
 			Content-Transfer-Encoding: quoted-printable
 			<html><body><p>Hello in HTML</p></body></html>
 
-		buildInlineImages( relatedBoundary )
+		buildInlineImages()
 			--<relatedBoundary>
 			Content-Type: image/png; name="logo.png"
 			Content-Transfer-Encoding: base64
@@ -295,7 +295,7 @@ func (m *MimeBuilder) setBoundaries() {
 			<base64-encoded image data>
 			--<relatedBoundary>--
 
-		buildAttachments( mixedBoundary )
+		buildAttachments()
 			--<mixedBoundary>
 			Content-Type: application/pdf; name="report.pdf"
 			Content-Transfer-Encoding: base64
