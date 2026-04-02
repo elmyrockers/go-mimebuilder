@@ -221,15 +221,12 @@ func setBoundaries( mixed, alternative, related *[]byte ) {
 	// Generate mixed, alternative & related boundaries
 		boundary[31] = '1'
 		copy( *mixed, boundary[:] )
-		// *mixed = append([]byte(nil), boundary[:]...)
 
 		boundary[31] = 'a'
 		copy( *alternative, boundary[:] )
-		// *alternative = append([]byte(nil), boundary[:]...)
 
 		boundary[31] = 'e'
 		copy( *related, boundary[:] )
-		// *related = append([]byte(nil), boundary[:]...)
 
 	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alternative, "\nRelated: ", related )
 }
