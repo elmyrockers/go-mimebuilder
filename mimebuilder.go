@@ -27,6 +27,10 @@ type InlineImage struct {
 	ContentID 	string
 }
 type MimeBuilder struct {
+	mixedBoundary 	[32]byte
+	altBoundary 	[32]byte
+	relBoundary 	[32]byte
+
 	from 		[]byte
 	to 			[]byte
 	cc 			[]byte
@@ -304,25 +308,25 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 	// Generate header
 		// (from, to, cc, bcc, reply-to)
 		// subject, mime-version
-
-		// content-type (mixed, alt, rel, html, plain)
-			// Pre-allocate boundaries
-				mixed := make([]byte, 32) 
-				alt   := make([]byte, 32)
-				rel   := make([]byte, 32)
-				setBoundaries( &mixed, &alt, &rel )
-			// mixed - if there is an attachment
-				// Content-Type: multipart/mixed; boundary=
-			// alt - if there are both altBody & body (html)
-				// Content-Type: multipart/alternative; boundary=
-			// rel - if there are both body(html) & inline-image
-				// Content-Type: multipart/related; boundary=
-			// HTML
-				// Content-Type: text/html; charset=UTF-8
-			// Plain-text
-				// Content-Type: text/plain; charset=UTF-8
-
 	// Generate body
+		// content-type (mixed, alt, rel, html, plain)
+		// Pre-allocate boundaries
+			mixed := make([]byte, 32) 
+			alt   := make([]byte, 32)
+			rel   := make([]byte, 32)
+			setBoundaries( &mixed, &alt, &rel )
+		// mixed - if there is an attachment
+			// Content-Type: multipart/mixed; boundary=
+		// alt - if there are both altBody & body (html)
+			// Content-Type: multipart/alternative; boundary=
+		// rel - if there are both body(html) & inline-image
+			// Content-Type: multipart/related; boundary=
+		// HTML
+			// Content-Type: text/html; charset=UTF-8
+		// Plain-text
+			// Content-Type: text/plain; charset=UTF-8
+
+
 
 
 	// fmt.Println( "\n\nMixed: ", mixed, "\nAlt: ", alt, "\nRelated: ", rel )
