@@ -45,7 +45,29 @@ type MimeBuilder struct {
 }
 
 func New() *MimeBuilder {
-	return &MimeBuilder{isHTML: false}
+	return &MimeBuilder{
+		// Headers: Usually short, < 128 bytes
+			from:    make([]byte, 0, 64),
+			to:      make([]byte, 0, 128),
+			cc:      make([]byte, 0, 128),
+			bcc:     make([]byte, 0, 128),
+			replyTo: make([]byte, 0, 64),
+			subject: make([]byte, 0, 128),
+
+		// Content: 4KB is a standard "Page Size" in most OSs
+		// Great for text/html bodies
+			body:    make([]byte, 0, 4096),
+			altBody: make([]byte, 0, 4096),
+			isHTML:  false,
+
+		// Slices of Structs: Preallocate space for 4 attachments/images
+		// to avoid resizing the slice header itself
+			attachments:  make([]Attachment, 0, 4),
+			inlineImages: make([]InlineImage, 0, 4),
+
+		// Errors: Hopefully 0, but 2 slots covers typical validation hits
+			errorList: make([]error, 0, 2),
+	}
 }
 
 // str2bytes() converts string to slice of byte without a memory allocation.
