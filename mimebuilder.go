@@ -210,7 +210,7 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 }
 
 // Generate and set boundaries: mixed, alternative and related
-// func setBoundaries( mixed, alternative, related *[]byte ) {
+// func setBoundaries() {
 func (m *MimeBuilder) setBoundaries() {
 	// Fetch current entropy (Time ^ Salt ^ PID)
 		var salt [16]byte
@@ -312,10 +312,6 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 	// Generate body
 		// content-type (mixed, alt, rel, html, plain)
 		// Pre-allocate boundaries
-			// mixed := make([]byte, 32) 
-			// alt   := make([]byte, 32)
-			// rel   := make([]byte, 32)
-			// setBoundaries( &mixed, &alt, &rel )
 			m.setBoundaries()
 		// mixed - if there is an attachment
 			// Content-Type: multipart/mixed; boundary=
