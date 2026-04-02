@@ -255,16 +255,22 @@ func setBoundaries( mixed, alternative, related *[]byte ) {
 
 /***************************
 		buildMixed()
+			- Content-Type: multipart/mixed; boundary="mixedBoundary"
 			--<mixedBoundary>
 			- call buildPlainText() or buildHtml() or buildAlternative()
 			- call buildAttachments()
 		buildAlternative()
 			- Content-Type: multipart/alternative; boundary="altBoundary"
-			- 
+			--<altBoundary>
 			- call buildPlainText()
+			--<altBoundary>
 			- call buildHtml() or buildRelated()
+			--<altBoundary>--
 		buildRelated()
-			- call buildHtml() & buildInlineImages( relatedBoundary )
+			- Content-Type: multipart/related; boundary="relatedBoundary"
+			--<relatedBoundary>
+			- call buildHtml()
+			- call buildInlineImages( relatedBoundary )
 
 		buildPlainText()
 			Content-Type: text/plain; charset=UTF-8
