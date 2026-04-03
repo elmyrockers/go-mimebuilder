@@ -36,8 +36,8 @@ import (
 func main() {
     // 1. Initialize and chain your email data
 	    m := mimebuilder.New().
-	        SetFrom("Sender Name", "sender@example.com").
-	        AddTo("Recipient Name", "recipient@example.com").
+	        SetFrom("Your Name", "yourname@example.com").
+	        AddTo("Helmi Aziz", "helmi@xeno.com.my").
 	        SetSubject("High Performance MIME").
 	        SetBody("<h1>Hello!</h1><p>Sent via go-mimebuilder.</p>").AsHTML().
 	        SetAltBody("Hello! Sent via go-mimebuilder.").
