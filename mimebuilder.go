@@ -302,10 +302,109 @@ func (m *MimeBuilder) setBoundaries() {
 			Content-Disposition: attachment; filename="report.pdf"
 			<base64-encoded data>
 			--<mixedBoundary>--
-
 ***************************/
+
+
+
 func (m *MimeBuilder) buildMixed( buf *bytebufferpool.ByteBuffer ){
+	// Content-Type: multipart/mixed; boundary="mixedBoundary"
+			buf.Write(str2bytes( "\nContent-Type: multipart/mixed; boundary=\"" ))
+			buf.Write( m.mixedBoundary[:] )
+			buf.Write(str2bytes( "\"\n\n" ))
 	
+	// --<mixedBoundary>
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.mixedBoundary[:] )
+
+	// Call buildPlainText() or buildHtml() or buildAlternative()
+		if len(m.body)>0 && len(m.altBody)>0 && m.isHTML {
+			m.buildAlternative( buf )
+		} else if m.isHTML {
+			m.buildHtml( buf )
+		} else {
+			m.buildPlainText( buf )
+		}
+
+	// Call buildAttachments()
+		m.buildAttachments( buf )
+}
+
+func (m *MimeBuilder) buildAlternative( buf *bytebufferpool.ByteBuffer ){
+	// Content-Type: multipart/alternative; boundary="altBoundary"
+		buf.Write(str2bytes( "\nContent-Type: multipart/alternative; boundary=\"" ))
+		buf.Write( m.altBoundary[:] )
+		buf.Write(str2bytes( "\"\n\n" ))
+	// --<altBoundary>
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.altBoundary[:] )
+
+	// Call buildPlainText()
+		m.buildPlainText( buf )
+
+	// --<altBoundary>
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.altBoundary[:] )
+
+	// Call buildHtml() or buildRelated()
+		if len(m.inlineImages)>0 {
+			m.buildRelated( buf )
+		} else {
+			m.buildHtml( buf )
+		}
+
+	// --<altBoundary>--
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.altBoundary[:] )
+		buf.Write(str2bytes( "--" ))
+}
+
+func (m *MimeBuilder) buildRelated( buf *bytebufferpool.ByteBuffer ){
+	// Content-Type: multipart/related; boundary="relatedBoundary"
+		buf.Write(str2bytes( "\nContent-Type: multipart/related; boundary=\"" ))
+		buf.Write( m.relBoundary[:] )
+		buf.Write(str2bytes( "\"\n\n" ))
+
+	// --<relatedBoundary>
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.relBoundary[:] )
+
+	// Call buildHtml()
+		m.buildHtml( buf )
+
+	// Call buildInlineImages()
+		m.buildInlineImages( buf )
+}
+
+func (m *MimeBuilder) buildHtml( buf *bytebufferpool.ByteBuffer ){
+	// Content-Type: text/html; charset=UTF-8
+		buf.Write(str2bytes( "\nContent-Type: text/html; charset=UTF-8" ))
+	// Content-Transfer-Encoding: quoted-printable
+		buf.Write(str2bytes( "\nContent-Transfer-Encoding: quoted-printable\n\n" ))
+	// <html><body><p>Hello in HTML</p></body></html>
+		buf.Write( m.body )
+		buf.Write(str2bytes("\n"))
+}
+
+func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
+	// Content-Type: text/plain; charset=UTF-8
+		buf.Write(str2bytes( "\nContent-Type: text/plain; charset=UTF-8" ))
+	// Content-Transfer-Encoding: quoted-printable
+		buf.Write(str2bytes( "\nContent-Transfer-Encoding: quoted-printable\n\n" ))
+	// Hello in plain text.
+		if !m.isHTML {
+			buf.Write( m.body )
+		} else {
+			buf.Write( m.altBody )
+		}
+		buf.Write(str2bytes("\n"))
+}
+
+func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
+	buf.Write(str2bytes( "\nIni adalah inlineImages\n\n" ))
+}
+
+func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
+	buf.Write(str2bytes( "\nIni adalah attachments\n\n" ))
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
@@ -337,22 +436,28 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 			buf.Write(str2bytes( "\nMIME-Version: 1.0" ))
 
 	// Generate body
-		// content-type (mixed, alt, rel, html, plain)
-		// Pre-allocate boundaries
-			m.setBoundaries()
+	// for content-type: mixed, alt, rel, html, plain
 		// mixed - if there is an attachment
 			if len(m.attachments)>0 {
-				
-			}
-			// Content-Type: multipart/mixed; boundary=
+				m.setBoundaries()
+				m.buildMixed( buf )
+
 		// alt - if there are both altBody & body (html)
-			// Content-Type: multipart/alternative; boundary=
+			} else if m.isHTML && len(m.body)>0 && len(m.altBody)>0 {
+				m.setBoundaries()
+				m.buildAlternative( buf )
+
 		// rel - if there are both body(html) & inline-image
-			// Content-Type: multipart/related; boundary=
+			} else if m.isHTML && len(m.body)>0 && len(m.inlineImages)>0 {
+				m.setBoundaries()
+				m.buildRelated( buf )
 		// HTML
-			// Content-Type: text/html; charset=UTF-8
+			} else if m.isHTML && len(m.body)>0 {
+				m.buildHtml( buf )
 		// Plain-text
-			// Content-Type: text/plain; charset=UTF-8
+			} else if len(m.altBody)>0 {
+				m.buildPlainText( buf )
+			}
 
 	fmt.Println("--- DEBUG START ---")
 	fmt.Println(buf.String())
