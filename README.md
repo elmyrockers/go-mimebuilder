@@ -2,7 +2,7 @@
 
 <div align="center">
 	<img src="email.jpg" width="500" />
-</div>
+</div><br>
 
 **A High-Performance, Zero-Allocation Go library for generating raw MIME messages.** Designed for high-concurrency systems and low-memory environments, it produces standards-compliant output ready for any SMTP client, mail server, or cloud API.
 
