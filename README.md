@@ -17,12 +17,13 @@ A lightweight Go library for creating MIME email messages, producing raw MIME ou
 - **Dual-Mode Attachments:** Flexible support for attaching raw `[]byte` or streaming via `io.Reader` for large file handling.
 
 ## Quickstart
-- Install the library:
+
+Install the library:
 ```bash
 go get github.com/elmyrockers/go-mimebuilder
 ```
 
-- Basic Example:
+Basic Example:
 ```go
 package main
 
