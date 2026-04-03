@@ -4,7 +4,7 @@
 	<img src="email.jpg" />
 </div>
 
-A lightweight Go library for creating MIME email messages, producing raw MIME output that works with any SMTP client or mail system.
+**A High-Performance, Zero-Allocation Go library for generating raw MIME messages.** Designed for high-concurrency systems and low-memory environments, it produces standards-compliant output ready for any SMTP client, mail server, or cloud API.
 
 ## Why go-mimebuilder?
 - **Zero-Allocation Architecture:** Uses `bytebufferpool` to recycle memory, drastically reducing GC overhead on low-RAM (1GB) VPS instances.
