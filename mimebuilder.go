@@ -433,7 +433,7 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 		// subject, mime-version
 			buf.Write(str2bytes( "\nSubject: " ))
 			buf.Write(m.subject[:])
-			buf.Write(str2bytes( "\nMIME-Version: 1.0" ))
+			buf.Write(str2bytes( "\r\nMIME-Version: 1.0\r\n\r\n" ))
 
 	// Generate body
 	// for content-type: mixed, alt, rel, html, plain
@@ -464,7 +464,7 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 	fmt.Println("--- DEBUG END ---")
 
 
-	fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
+	// fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
 	return nil,nil
 }
 
