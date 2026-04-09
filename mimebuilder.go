@@ -24,9 +24,9 @@ type Attachment struct {
 }
 
 type InlineImage struct {
-	Filename 	string
+	Filename 	[]byte
 	Data 		[]byte
-	ContentID 	string
+	ContentID 	[]byte
 }
 type MimeBuilder struct {
 	mixedBoundary 	[32]byte
@@ -388,9 +388,9 @@ func (m *MimeBuilder) SetAltBody( content string ) *MimeBuilder {
 // cid:  The unique ID used in HTML (e.g., "company_logo")
 func (m *MimeBuilder) Embed(name string, data []byte, cid string) *MimeBuilder {
 	m.inlineImages = append(m.inlineImages, InlineImage{
-		Filename:  name,
+		Filename: str2bytes(name),
 		Data:      data,
-		ContentID: cid,
+		ContentID: str2bytes(cid),
 	})
 	return m
 }
@@ -607,11 +607,42 @@ func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
 }
 
 func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
-	buf.Write(str2bytes( "\r\nIni adalah inlineImages\r\n\r\n" ))
+	// buf.Write(str2bytes( "\r\nIni adalah inlineImages\r\n\r\n" ))
+	for _, embed := range m.inlineImages {
+		// --<relatedBoundary>
+			buf.Write(str2bytes( "\r\n\r\n--" ))
+			buf.Write( m.relBoundary[:] )
+
+		// Content-Type: image/png; name="logo.png"
+			buf.Write(str2bytes( "\r\nContent-Type: " ))
+			buf.Write( getMimeType(embed.Filename) )
+			buf.Write(str2bytes( "; name=\"" ))
+			buf.Write(embed.Filename)
+			buf.Write(str2bytes( "\"" ))
+
+		// Content-Transfer-Encoding: base64
+			buf.Write(str2bytes( "\r\nContent-Transfer-Encoding: base64" ))
+
+		// Content-Disposition: inline; filename="logo.png"
+			buf.Write(str2bytes( "\r\nContent-Disposition: inline; filename=\"" ))
+			buf.Write(embed.Filename)
+			buf.Write(str2bytes( "\"" ))
+
+		// Content-ID: <company_logo>
+			buf.Write(str2bytes( "\r\nContent-ID: " ))
+			buf.Write(embed.ContentID)
+			buf.Write(str2bytes( "\r\n" ))
+
+		// <base64-encoded image data>
+			encodeBase64( buf, embed.Data )
+	}
+	// --<relatedBoundary>--
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.relBoundary[:] )
+		buf.Write(str2bytes( "--\r\r" ))
 }
 
 func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
-	// buf.Write(str2bytes( "\r\nIni adalah attachments\r\n\r\n" ))
 	for _, attach := range m.attachments {
 		// --<mixedBoundary>
 			buf.Write(str2bytes( "\r\n\r\n--" ))
