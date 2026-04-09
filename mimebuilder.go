@@ -12,14 +12,15 @@ import (
 	// "encoding/hex"
 	// "mime/quotedprintable"
 	"encoding/binary"
+	"encoding/base64"
 
 	"github.com/valyala/bytebufferpool"
 )
 
 type Attachment struct {
-	Filename 	string
-	Stream 		io.Reader
+	Filename 	[]byte
 	Data 		[]byte
+	Stream 		io.Reader
 }
 
 type InlineImage struct {
@@ -155,6 +156,136 @@ func qEncodeSubject(buf *bytebufferpool.ByteBuffer, subject []byte) {
 	buf.Write(str2bytes("?="))
 }
 
+func getMimeType(filename []byte) []byte {
+	dotIdx := -1
+	for i := len(filename) - 1; i >= 0; i-- {
+		if filename[i] == '.' {
+			dotIdx = i
+			break
+		}
+		if filename[i] == '/' || filename[i] == '\\' {
+			break
+		}
+	}
+
+	if dotIdx == -1 || dotIdx == len(filename)-1 {
+		return str2bytes("application/octet-stream")
+	}
+
+	ext := filename[dotIdx:]
+
+	switch string(ext) {
+	// --- DOCUMENTS ---
+	case ".pdf":
+		return str2bytes("application/pdf")
+	case ".doc":
+		return str2bytes("application/msword")
+	case ".docx":
+		return str2bytes("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+	case ".xls":
+		return str2bytes("application/vnd.ms-excel")
+	case ".xlsx":
+		return str2bytes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	case ".ppt":
+		return str2bytes("application/vnd.ms-powerpoint")
+	case ".pptx":
+		return str2bytes("application/vnd.openxmlformats-officedocument.presentationml.presentation")
+
+	// --- IMAGES ---
+	case ".jpg", ".jpeg":
+		return str2bytes("image/jpeg")
+	case ".png":
+		return str2bytes("image/png")
+	case ".gif":
+		return str2bytes("image/gif")
+	case ".webp":
+		return str2bytes("image/webp")
+	case ".svg":
+		return str2bytes("image/svg+xml")
+	case ".ico":
+		return str2bytes("image/x-icon")
+
+	// --- TEXT ---
+	case ".txt":
+		return str2bytes("text/plain")
+	case ".html", ".htm":
+		return str2bytes("text/html")
+	case ".csv":
+		return str2bytes("text/csv")
+	case ".css":
+		return str2bytes("text/css")
+	case ".js":
+		return str2bytes("text/javascript")
+
+	// --- ARCHIVES ---
+	case ".zip":
+		return str2bytes("application/zip")
+	case ".rar":
+		return str2bytes("application/vnd.rar")
+	case ".7z":
+		return str2bytes("application/x-7z-compressed")
+	case ".tar":
+		return str2bytes("application/x-tar")
+	case ".gz":
+		return str2bytes("application/gzip")
+
+	// --- AUDIO/VIDEO ---
+	case ".mp3":
+		return str2bytes("audio/mpeg")
+	case ".wav":
+		return str2bytes("audio/wav")
+	case ".mp4":
+		return str2bytes("video/mp4")
+	case ".mpeg":
+		return str2bytes("video/mpeg")
+	case ".avi":
+		return str2bytes("video/x-msvideo")
+
+	default:
+		return str2bytes("application/octet-stream")
+	}
+}
+
+func encodeBase64(buf *bytebufferpool.ByteBuffer, data []byte) {
+	if len(data) == 0 { return }
+
+	// Pre-calculate worst-case space: 
+	// Base64 size + CRLF (\r\n) every 76 chars
+		maxLen := base64.StdEncoding.EncodedLen(len(data)) + (len(data)/57+1)*2
+		currLen := len(buf.B)
+	
+	// Capacity Guard
+	// If the pool's buffer is too small, we grow it manually.
+	// This is zero-alloc in the long run as the pool warms up.
+		if cap(buf.B) < currLen+maxLen {
+			newB := make([]byte, currLen, currLen+maxLen)
+			copy(newB, buf.B) // Preserves headers/body already in the buffer
+			buf.B = newB
+		}
+
+	// The Encoding Loop
+		const chunkSize = 57 // 57 bytes in = 76 chars out (MIME standard)
+		for i := 0; i < len(data); i += chunkSize {
+			end := i + chunkSize
+			if end > len(data) {
+				end = len(data)
+			}
+
+			srcChunk := data[i:end]
+			encodedLen := base64.StdEncoding.EncodedLen(len(srcChunk))
+			
+			// Shift the length forward to "claim" space for this chunk
+				startOfChunk := len(buf.B)
+				buf.B = buf.B[:startOfChunk+encodedLen]
+			
+			// Encode directly into the claimed memory
+				base64.StdEncoding.Encode(buf.B[startOfChunk:], srcChunk)
+
+			// Append the mandatory MIME line break
+				buf.B = append(buf.B, '\r', '\n')
+		}
+}
+
 func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
 	// Reset the internal buffer (Keep the RAM, set length to 0)
 		m.from = m.from[:0]
@@ -266,7 +397,7 @@ func (m *MimeBuilder) Embed(name string, data []byte, cid string) *MimeBuilder {
 
 func (m *MimeBuilder) Attach(filename string, data []byte) *MimeBuilder {
 	m.attachments = append(m.attachments, Attachment{
-		Filename: filename,
+		Filename: str2bytes(filename),
 		Data:     data,
 	})
 	return m
@@ -274,7 +405,7 @@ func (m *MimeBuilder) Attach(filename string, data []byte) *MimeBuilder {
 
 func (m *MimeBuilder) AttachReader(filename string, r io.Reader) *MimeBuilder {
 	m.attachments = append(m.attachments, Attachment{
-		Filename: filename,
+		Filename: str2bytes(filename),
 		Stream:   r,
 	})
 	return m
@@ -480,7 +611,35 @@ func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
 }
 
 func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
-	buf.Write(str2bytes( "\r\nIni adalah attachments\r\n\r\n" ))
+	// buf.Write(str2bytes( "\r\nIni adalah attachments\r\n\r\n" ))
+	for _, attach := range m.attachments {
+		// --<mixedBoundary>
+			buf.Write(str2bytes( "\r\n\r\n--" ))
+			buf.Write( m.mixedBoundary[:] )
+
+		// Content-Type: application/pdf; name="report.pdf"
+			buf.Write(str2bytes( "\r\nContent-Type: " ))
+			buf.Write( getMimeType(attach.Filename) )
+			buf.Write(str2bytes( "; name=\"" ))
+			buf.Write(attach.Filename)
+			buf.Write(str2bytes( "\"" ))
+
+		// Content-Transfer-Encoding: base64
+			buf.Write(str2bytes( "\r\nContent-Transfer-Encoding: base64" ))
+
+		// Content-Disposition: attachment; filename="report.pdf"
+			buf.Write(str2bytes( "\r\nContent-Disposition: attachment; filename=\"" ))
+			buf.Write(attach.Filename)
+			buf.Write(str2bytes( "\"\r\n" ))
+
+		// <base64-encoded data>
+			encodeBase64( buf, attach.Data )
+	}
+
+	// --<mixedBoundary>--
+		buf.Write(str2bytes( "--" ))
+		buf.Write( m.mixedBoundary[:] )
+		buf.Write(str2bytes( "--" ))
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
@@ -507,8 +666,6 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 				buf.Write(m.replyTo[:])
 			}
 		// subject, mime-version
-			// buf.Write(str2bytes( "\r\nSubject: " ))
-			// buf.Write(m.subject[:])
 			qEncodeSubject( buf, m.subject[:] )
 			buf.Write(str2bytes( "\r\nMIME-Version: 1.0" ))
 
