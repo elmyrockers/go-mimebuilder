@@ -81,37 +81,78 @@ func str2bytes(s string) []byte {
 }
 
 func qpEncode(buf *bytebufferpool.ByteBuffer, data []byte) {
-    const hexTable = "0123456789ABCDEF"
-    lineLen := 0
-    dataLen := len(data)
+	const hexTable = "0123456789ABCDEF"
+	lineLen := 0
+	dataLen := len(data)
 
-    for i := 0; i < dataLen; i++ {
-        b := data[i]
+	for i := 0; i < dataLen; i++ {
+		b := data[i]
 
-        // Soft line break
-        if lineLen >= 72 {
-            buf.B = append(buf.B, '=', '\r', '\n')
-            lineLen = 0
-        }
+		// Soft line break
+		if lineLen >= 72 {
+			buf.B = append(buf.B, '=', '\r', '\n')
+			lineLen = 0
+		}
 
-        // Trailing space check (RFC 2045)
-        isSpace := b == ' ' || b == '\t'
-        // If it's a space and the NEXT byte is a newline or end of data, we MUST encode it
-        isTrailing := isSpace && (i+1 == dataLen || data[i+1] == '\r' || data[i+1] == '\n')
+		// Trailing space check (RFC 2045)
+		isSpace := b == ' ' || b == '\t'
+		// If it's a space and the NEXT byte is a newline or end of data, we MUST encode it
+		isTrailing := isSpace && (i+1 == dataLen || data[i+1] == '\r' || data[i+1] == '\n')
 
-        if (b >= '!' && b <= '<') || (b >= '>' && b <= '~') || (isSpace && !isTrailing) {
-            buf.B = append(buf.B, b)
-            lineLen++
-        } else {
-            buf.B = append(buf.B, '=', hexTable[b>>4], hexTable[b&0x0f])
-            lineLen += 3
-        }
+		if (b >= '!' && b <= '<') || (b >= '>' && b <= '~') || (isSpace && !isTrailing) {
+			buf.B = append(buf.B, b)
+			lineLen++
+		} else {
+			buf.B = append(buf.B, '=', hexTable[b>>4], hexTable[b&0x0f])
+			lineLen += 3
+		}
 
-        // Reset lineLen on hard newlines to keep lines pretty
-        if b == '\n' {
-            lineLen = 0
-        }
-    }
+		// Reset lineLen on hard newlines to keep lines pretty
+		if b == '\n' {
+			lineLen = 0
+		}
+	}
+}
+
+func qEncodeSubject(buf *bytebufferpool.ByteBuffer, subject []byte) {
+	buf.Write(str2bytes("\r\nSubject: =?UTF-8?Q?"))
+	
+	lineLen := 19 
+	const hexTable = "0123456789ABCDEF"
+
+	for i := 0; i < len(subject); {
+		// Determine how many bytes the current UTF-8 character uses
+		// This ensures we don't split an emoji across two encoded words.
+			charLen := 1
+			if subject[i] >= 0x80 {
+				// Simple way to find UTF-8 char length without 'unicode/utf8' package
+				if subject[i] >= 0xf0 { charLen = 4 } else if subject[i] >= 0xe0 { charLen = 3 } else if subject[i] >= 0xc0 { charLen = 2 }
+			}
+
+		// Check if adding this character (and its hex encoding) exceeds the limit
+		// A 4-byte char becomes 12 hex chars. We check BEFORE writing.
+			if lineLen + (charLen * 3) >= 70 && i > 0 {
+				buf.Write(str2bytes("?=\r\n =?UTF-8?Q?"))
+				lineLen = 11 
+			}
+
+		// Write the character (1 or more bytes)
+			for j := 0; j < charLen && i < len(subject); j++ {
+				b := subject[i]
+				if (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') {
+					buf.B = append(buf.B, b)
+					lineLen++
+				} else if b == ' ' {
+					buf.B = append(buf.B, '_')
+					lineLen++
+				} else {
+					buf.B = append(buf.B, '=', hexTable[b>>4], hexTable[b&0x0f])
+					lineLen += 3
+				}
+				i++ // Increment outer loop
+			}
+	}
+	buf.Write(str2bytes("?="))
 }
 
 func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
@@ -466,8 +507,9 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 				buf.Write(m.replyTo[:])
 			}
 		// subject, mime-version
-			buf.Write(str2bytes( "\r\nSubject: " ))
-			buf.Write(m.subject[:])
+			// buf.Write(str2bytes( "\r\nSubject: " ))
+			// buf.Write(m.subject[:])
+			qEncodeSubject( buf, m.subject[:] )
 			buf.Write(str2bytes( "\r\nMIME-Version: 1.0" ))
 
 	// Generate body
