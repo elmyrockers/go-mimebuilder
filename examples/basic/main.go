@@ -7,15 +7,19 @@ import (
 )
 
 func main() {
-	data, _ := os.ReadFile( "../email.jpg" )
+	// emailjpg, _ := os.ReadFile( "../../email.jpg" )
+	checkpng, _ := os.ReadFile( "../../check.png" )
+	informationpng, _ := os.ReadFile( "../../Information_icon.svg.png" )
 	mimebuilder.New().
-				SetFrom( "elmyrockers@gmail.com", "Helmi Aziz" ).
-				AddTo( "test@yahoo.com", "test" ).
-				AddTo( "test2@yahoo.com", "test2" ).
-				SetSubject( "Test Sahaja" ).
-				SetBody( "Ini adalah html" ).AsHTML().
+				SetFrom( "Helmi Aziz", "elmyrockers@gmail.com" ).
+				AddTo( "test", "test@yahoo.com" ).
+				AddTo( "test2", "test2@yahoo.com" ).
+				SetSubject( "Test Sahaja 😭" ).
+				SetBody( "<html><body><h1>Ini adalah yeay..........	â.....💁👌🎍😍......hjkghgjhf.................hgjhggjhghj......ÿ.........jhgjhgjhiuyuiu..............iuyiuyiuy.............Ç............hehhehe.............................ehehehe.................... html</h1></body></html>" ).AsHTML().
 				SetAltBody( "Ini adalah plain 100%" ).
-				Attach( "test.jpg", data ).
+				// Attach( "email.jpg", emailjpg ).
+				Attach( "check.png", checkpng ).
+				Attach( "information.png", informationpng ).
 				Build()
 
 	// fmt.Println( data )
