@@ -10,6 +10,7 @@ import (
 	"os"
 	"crypto/rand"
 	// "encoding/hex"
+	// "mime/quotedprintable"
 	"encoding/binary"
 
 	"github.com/valyala/bytebufferpool"
@@ -79,6 +80,39 @@ func str2bytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
+func qpEncode(buf *bytebufferpool.ByteBuffer, data []byte) {
+    const hexTable = "0123456789ABCDEF"
+    lineLen := 0
+    dataLen := len(data)
+
+    for i := 0; i < dataLen; i++ {
+        b := data[i]
+
+        // Soft line break
+        if lineLen >= 72 {
+            buf.B = append(buf.B, '=', '\r', '\n')
+            lineLen = 0
+        }
+
+        // Trailing space check (RFC 2045)
+        isSpace := b == ' ' || b == '\t'
+        // If it's a space and the NEXT byte is a newline or end of data, we MUST encode it
+        isTrailing := isSpace && (i+1 == dataLen || data[i+1] == '\r' || data[i+1] == '\n')
+
+        if (b >= '!' && b <= '<') || (b >= '>' && b <= '~') || (isSpace && !isTrailing) {
+            buf.B = append(buf.B, b)
+            lineLen++
+        } else {
+            buf.B = append(buf.B, '=', hexTable[b>>4], hexTable[b&0x0f])
+            lineLen += 3
+        }
+
+        // Reset lineLen on hard newlines to keep lines pretty
+        if b == '\n' {
+            lineLen = 0
+        }
+    }
+}
 
 func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
 	// Reset the internal buffer (Keep the RAM, set length to 0)
@@ -308,9 +342,9 @@ func (m *MimeBuilder) setBoundaries() {
 
 func (m *MimeBuilder) buildMixed( buf *bytebufferpool.ByteBuffer ){
 	// Content-Type: multipart/mixed; boundary="mixedBoundary"
-			buf.Write(str2bytes( "\nContent-Type: multipart/mixed; boundary=\"" ))
+			buf.Write(str2bytes( "\r\nContent-Type: multipart/mixed; boundary=\"" ))
 			buf.Write( m.mixedBoundary[:] )
-			buf.Write(str2bytes( "\"\n\n" ))
+			buf.Write(str2bytes( "\"\r\n\r\n" ))
 	
 	// --<mixedBoundary>
 		buf.Write(str2bytes( "--" ))
@@ -331,9 +365,9 @@ func (m *MimeBuilder) buildMixed( buf *bytebufferpool.ByteBuffer ){
 
 func (m *MimeBuilder) buildAlternative( buf *bytebufferpool.ByteBuffer ){
 	// Content-Type: multipart/alternative; boundary="altBoundary"
-		buf.Write(str2bytes( "\nContent-Type: multipart/alternative; boundary=\"" ))
+		buf.Write(str2bytes( "\r\nContent-Type: multipart/alternative; boundary=\"" ))
 		buf.Write( m.altBoundary[:] )
-		buf.Write(str2bytes( "\"\n\n" ))
+		buf.Write(str2bytes( "\"\r\n\r\n" ))
 	// --<altBoundary>
 		buf.Write(str2bytes( "--" ))
 		buf.Write( m.altBoundary[:] )
@@ -360,9 +394,9 @@ func (m *MimeBuilder) buildAlternative( buf *bytebufferpool.ByteBuffer ){
 
 func (m *MimeBuilder) buildRelated( buf *bytebufferpool.ByteBuffer ){
 	// Content-Type: multipart/related; boundary="relatedBoundary"
-		buf.Write(str2bytes( "\nContent-Type: multipart/related; boundary=\"" ))
+		buf.Write(str2bytes( "\r\nContent-Type: multipart/related; boundary=\"" ))
 		buf.Write( m.relBoundary[:] )
-		buf.Write(str2bytes( "\"\n\n" ))
+		buf.Write(str2bytes( "\"\r\n\r\n" ))
 
 	// --<relatedBoundary>
 		buf.Write(str2bytes( "--" ))
@@ -377,34 +411,35 @@ func (m *MimeBuilder) buildRelated( buf *bytebufferpool.ByteBuffer ){
 
 func (m *MimeBuilder) buildHtml( buf *bytebufferpool.ByteBuffer ){
 	// Content-Type: text/html; charset=UTF-8
-		buf.Write(str2bytes( "\nContent-Type: text/html; charset=UTF-8" ))
+		buf.Write(str2bytes( "\r\nContent-Type: text/html; charset=UTF-8" ))
 	// Content-Transfer-Encoding: quoted-printable
-		buf.Write(str2bytes( "\nContent-Transfer-Encoding: quoted-printable\n\n" ))
+		buf.Write(str2bytes( "\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n" ))
 	// <html><body><p>Hello in HTML</p></body></html>
-		buf.Write( m.body )
-		buf.Write(str2bytes("\n"))
+		qpEncode( buf, m.body )
+
+		buf.Write(str2bytes("\r\n"))
 }
 
 func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
 	// Content-Type: text/plain; charset=UTF-8
-		buf.Write(str2bytes( "\nContent-Type: text/plain; charset=UTF-8" ))
+		buf.Write(str2bytes( "\r\nContent-Type: text/plain; charset=UTF-8" ))
 	// Content-Transfer-Encoding: quoted-printable
-		buf.Write(str2bytes( "\nContent-Transfer-Encoding: quoted-printable\n\n" ))
+		buf.Write(str2bytes( "\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n" ))
 	// Hello in plain text.
 		if !m.isHTML {
-			buf.Write( m.body )
+			qpEncode( buf, m.body )
 		} else {
-			buf.Write( m.altBody )
+			qpEncode( buf, m.altBody )
 		}
-		buf.Write(str2bytes("\n"))
+		buf.Write(str2bytes("\r\n"))
 }
 
 func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
-	buf.Write(str2bytes( "\nIni adalah inlineImages\n\n" ))
+	buf.Write(str2bytes( "\r\nIni adalah inlineImages\r\n\r\n" ))
 }
 
 func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
-	buf.Write(str2bytes( "\nIni adalah attachments\n\n" ))
+	buf.Write(str2bytes( "\r\nIni adalah attachments\r\n\r\n" ))
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
@@ -416,24 +451,24 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 		// (from, to, cc, bcc, reply-to)
 			buf.Write(str2bytes( "From: " ))
 			buf.Write(m.from[:])
-			buf.Write(str2bytes( "\nTo: " ))
+			buf.Write(str2bytes( "\r\nTo: " ))
 			buf.Write(m.to[:])
 			if len(m.cc)>0 {
-				buf.Write(str2bytes( "\nCc: " ))
+				buf.Write(str2bytes( "\r\nCc: " ))
 				buf.Write(m.cc[:])
 			}
 			if len(m.bcc)>0 {
-				buf.Write(str2bytes( "\nBcc: " ))
+				buf.Write(str2bytes( "\r\nBcc: " ))
 				buf.Write(m.bcc[:])
 			}
 			if len(m.replyTo)>0 {
-				buf.Write(str2bytes( "\nReply-To: " ))
+				buf.Write(str2bytes( "\r\nReply-To: " ))
 				buf.Write(m.replyTo[:])
 			}
 		// subject, mime-version
-			buf.Write(str2bytes( "\nSubject: " ))
+			buf.Write(str2bytes( "\r\nSubject: " ))
 			buf.Write(m.subject[:])
-			buf.Write(str2bytes( "\r\nMIME-Version: 1.0\r\n\r\n" ))
+			buf.Write(str2bytes( "\r\nMIME-Version: 1.0" ))
 
 	// Generate body
 	// for content-type: mixed, alt, rel, html, plain
@@ -468,7 +503,7 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 	return nil,nil
 }
 
-
+ 
 
 /*
 	CONSTRUCT----------
