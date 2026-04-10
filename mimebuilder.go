@@ -528,6 +528,7 @@ func (m *MimeBuilder) buildMixed( buf *bytebufferpool.ByteBuffer ){
 		} else {
 			m.buildPlainText( buf )
 		}
+		buf.Write(str2bytes( "\r\n" ))
 
 	// Call buildAttachments()
 		m.buildAttachments( buf )
@@ -544,6 +545,7 @@ func (m *MimeBuilder) buildAlternative( buf *bytebufferpool.ByteBuffer ){
 
 	// Call buildPlainText()
 		m.buildPlainText( buf )
+		buf.Write(str2bytes( "\r\n\r\n" ))
 
 	// --<altBoundary>
 		buf.Write(str2bytes( "--" ))
@@ -555,6 +557,7 @@ func (m *MimeBuilder) buildAlternative( buf *bytebufferpool.ByteBuffer ){
 		} else {
 			m.buildHtml( buf )
 		}
+		buf.Write(str2bytes( "\r\n" ))
 
 	// --<altBoundary>--
 		buf.Write(str2bytes( "--" ))
@@ -574,6 +577,7 @@ func (m *MimeBuilder) buildRelated( buf *bytebufferpool.ByteBuffer ){
 
 	// Call buildHtml()
 		m.buildHtml( buf )
+		buf.Write(str2bytes( "\r\n" ))
 
 	// Call buildInlineImages()
 		m.buildInlineImages( buf )
@@ -587,7 +591,7 @@ func (m *MimeBuilder) buildHtml( buf *bytebufferpool.ByteBuffer ){
 	// <html><body><p>Hello in HTML</p></body></html>
 		qpEncode( buf, m.body )
 
-		buf.Write(str2bytes("\r\n"))
+		// buf.Write(str2bytes("\r\n"))
 }
 
 func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
@@ -601,14 +605,14 @@ func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
 		} else {
 			qpEncode( buf, m.altBody )
 		}
-		buf.Write(str2bytes("\r\n"))
+		// buf.Write(str2bytes("\r\n"))
 }
 
 func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
 	// buf.Write(str2bytes( "\r\nIni adalah inlineImages\r\n\r\n" ))
 	for _, embed := range m.inlineImages {
 		// --<relatedBoundary>
-			buf.Write(str2bytes( "\r\n\r\n--" ))
+			buf.Write(str2bytes( "\r\n--" ))
 			buf.Write( m.relBoundary[:] )
 
 		// Content-Type: image/png; name="logo.png"
@@ -637,13 +641,13 @@ func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
 	// --<relatedBoundary>--
 		buf.Write(str2bytes( "--" ))
 		buf.Write( m.relBoundary[:] )
-		buf.Write(str2bytes( "--\r\r" ))
+		buf.Write(str2bytes( "--\r\n" ))
 }
 
 func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
 	for _, attach := range m.attachments {
 		// --<mixedBoundary>
-			buf.Write(str2bytes( "\r\n\r\n--" ))
+			buf.Write(str2bytes( "\r\n--" ))
 			buf.Write( m.mixedBoundary[:] )
 
 		// Content-Type: application/pdf; name="report.pdf"
@@ -668,7 +672,7 @@ func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
 	// --<mixedBoundary>--
 		buf.Write(str2bytes( "--" ))
 		buf.Write( m.mixedBoundary[:] )
-		buf.Write(str2bytes( "--" ))
+		buf.Write(str2bytes( "--\r\n" ))
 }
 
 func (m *MimeBuilder) Build() ([]byte, error) {
@@ -718,7 +722,7 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 			} else if m.isHTML && len(m.body)>0 {
 				m.buildHtml( buf )
 		// Plain-text
-			} else if len(m.altBody)>0 {
+			} else if len(m.body)>0 {
 				m.buildPlainText( buf )
 			}
 
@@ -731,7 +735,7 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 	return nil,nil
 }
 
- 
+
 
 /*
 	CONSTRUCT----------
