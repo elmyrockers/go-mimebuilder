@@ -9,8 +9,6 @@ import (
 	"time"
 	"os"
 	"crypto/rand"
-	// "encoding/hex"
-	// "mime/quotedprintable"
 	"encoding/binary"
 	"encoding/base64"
 
@@ -176,74 +174,74 @@ func getMimeType(filename []byte) []byte {
 
 	switch string(ext) {
 	// --- DOCUMENTS ---
-	case ".pdf":
-		return str2bytes("application/pdf")
-	case ".doc":
-		return str2bytes("application/msword")
-	case ".docx":
-		return str2bytes("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-	case ".xls":
-		return str2bytes("application/vnd.ms-excel")
-	case ".xlsx":
-		return str2bytes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	case ".ppt":
-		return str2bytes("application/vnd.ms-powerpoint")
-	case ".pptx":
-		return str2bytes("application/vnd.openxmlformats-officedocument.presentationml.presentation")
+		case ".pdf":
+			return str2bytes("application/pdf")
+		case ".doc":
+			return str2bytes("application/msword")
+		case ".docx":
+			return str2bytes("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+		case ".xls":
+			return str2bytes("application/vnd.ms-excel")
+		case ".xlsx":
+			return str2bytes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		case ".ppt":
+			return str2bytes("application/vnd.ms-powerpoint")
+		case ".pptx":
+			return str2bytes("application/vnd.openxmlformats-officedocument.presentationml.presentation")
 
 	// --- IMAGES ---
-	case ".jpg", ".jpeg":
-		return str2bytes("image/jpeg")
-	case ".png":
-		return str2bytes("image/png")
-	case ".gif":
-		return str2bytes("image/gif")
-	case ".webp":
-		return str2bytes("image/webp")
-	case ".svg":
-		return str2bytes("image/svg+xml")
-	case ".ico":
-		return str2bytes("image/x-icon")
+		case ".jpg", ".jpeg":
+			return str2bytes("image/jpeg")
+		case ".png":
+			return str2bytes("image/png")
+		case ".gif":
+			return str2bytes("image/gif")
+		case ".webp":
+			return str2bytes("image/webp")
+		case ".svg":
+			return str2bytes("image/svg+xml")
+		case ".ico":
+			return str2bytes("image/x-icon")
 
 	// --- TEXT ---
-	case ".txt":
-		return str2bytes("text/plain")
-	case ".html", ".htm":
-		return str2bytes("text/html")
-	case ".csv":
-		return str2bytes("text/csv")
-	case ".css":
-		return str2bytes("text/css")
-	case ".js":
-		return str2bytes("text/javascript")
+		case ".txt":
+			return str2bytes("text/plain")
+		case ".html", ".htm":
+			return str2bytes("text/html")
+		case ".csv":
+			return str2bytes("text/csv")
+		case ".css":
+			return str2bytes("text/css")
+		case ".js":
+			return str2bytes("text/javascript")
 
 	// --- ARCHIVES ---
-	case ".zip":
-		return str2bytes("application/zip")
-	case ".rar":
-		return str2bytes("application/vnd.rar")
-	case ".7z":
-		return str2bytes("application/x-7z-compressed")
-	case ".tar":
-		return str2bytes("application/x-tar")
-	case ".gz":
-		return str2bytes("application/gzip")
+		case ".zip":
+			return str2bytes("application/zip")
+		case ".rar":
+			return str2bytes("application/vnd.rar")
+		case ".7z":
+			return str2bytes("application/x-7z-compressed")
+		case ".tar":
+			return str2bytes("application/x-tar")
+		case ".gz":
+			return str2bytes("application/gzip")
 
 	// --- AUDIO/VIDEO ---
-	case ".mp3":
-		return str2bytes("audio/mpeg")
-	case ".wav":
-		return str2bytes("audio/wav")
-	case ".mp4":
-		return str2bytes("video/mp4")
-	case ".mpeg":
-		return str2bytes("video/mpeg")
-	case ".avi":
-		return str2bytes("video/x-msvideo")
+		case ".mp3":
+			return str2bytes("audio/mpeg")
+		case ".wav":
+			return str2bytes("audio/wav")
+		case ".mp4":
+			return str2bytes("video/mp4")
+		case ".mpeg":
+			return str2bytes("video/mpeg")
+		case ".avi":
+			return str2bytes("video/x-msvideo")
 
-	default:
-		return str2bytes("application/octet-stream")
-	}
+		default:
+			return str2bytes("application/octet-stream")
+		}
 }
 
 func encodeBase64(buf *bytebufferpool.ByteBuffer, data []byte) {
