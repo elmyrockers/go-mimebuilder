@@ -17,8 +17,8 @@ func init() {
 		_, _ = rand.Read(entropy[:])
 }
 
-// getRandomBytes claims 16 bytes from the reservoir atomically
-func getRandomBytes(b []byte) {
+// setRandomBytes claims 16 bytes from the reservoir atomically
+func setRandomBytes(b []byte) {
 	size := uint32(len(b))
 	
 	// Atomically move the cursor
