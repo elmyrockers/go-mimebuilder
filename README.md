@@ -71,7 +71,7 @@ func main() {
 | BenchmarkMimeBuilder    | 459.6   | 0    | 0         | auto‑scaled    | ~2.57s     | —                    |
 | Stress Test (1M runs)   | —       | 0    | 0         | 1,000,000      | 367.6 ms   | 2,720,118            |
 
-**Environment:** Go 1.22, Windows 11, Intel i5‑4300U @ 1.90GHz  
+**Environment:** Go 1.26.1, Windows 11, Intel i5‑4300U @ 1.90GHz  
 
 ### **Key takeaway:**  
 > - The micro‑benchmark confirms **zero allocations per operation** with ~460 ns/op steady‑state performance.  
