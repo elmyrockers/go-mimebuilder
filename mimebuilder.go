@@ -730,6 +730,20 @@ func (m *MimeBuilder) Build() (*bytebufferpool.ByteBuffer, error) {
 
 func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 	bytebufferpool.Put( buf )
+
+	// Reset attributes
+		m.from = m.from[:0]
+		m.to = m.to[:0]
+		m.cc = m.cc[:0]
+		m.bcc = m.bcc[:0]
+		m.replyTo = m.replyTo[:0]
+		m.subject = m.subject[:0]
+		m.body = m.body[:0]
+		m.altBody = m.altBody[:0]
+		m.attachments = m.attachments[:0]
+		m.inlineImages = m.inlineImages[:0]
+		m.errorList = m.errorList[:0]
+		m.isHTML = false
 }
 
 /*
