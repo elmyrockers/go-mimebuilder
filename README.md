@@ -73,7 +73,7 @@ func main() {
 
 **Environment:** Go 1.22, Windows 11, Intel i5‑4300U @ 1.90GHz  
 
-**Key takeaway:**  
+### **Key takeaway:**  
 - The micro‑benchmark confirms **zero allocations per operation** with ~460 ns/op steady‑state performance.  
 - The stress test shows the library can process **1 million requests in under 0.4 seconds**, sustaining ~2.7 million requests per second with zero allocations.
 
