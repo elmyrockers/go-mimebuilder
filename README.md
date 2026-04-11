@@ -1,7 +1,7 @@
 # go-mimebuilder
 
 <div align="center">
-	<img src="email.jpg" width="500" />
+    <img src="email.jpg" width="500" />
 </div><br>
 
 **A High-Performance, Zero-Allocation Go library for generating raw MIME messages.** Designed for high-concurrency systems and low-memory environments, it produces standards-compliant output ready for any SMTP client, mail server, or cloud API.
@@ -28,30 +28,38 @@ Basic Example:
 package main
 
 import (
-	"github.com/elmyrockers/go-mimebuilder"
     "fmt"
     "os"
+
+    "github.com/elmyrockers/go-mimebuilder"
 )
 
 func main() {
-    // 1. Initialize and chain your email data
-	    m := mimebuilder.New().
-	        SetFrom("Your Name", "yourname@example.com").
-	        AddTo("Helmi Aziz", "helmi@xeno.com.my").
-	        SetSubject("High Performance MIME").
-	        SetBody("<h1>Hello!</h1><p>Sent via go-mimebuilder.</p>").AsHTML().
-	        SetAltBody("Hello! Sent via go-mimebuilder.").
-	        Attach("document.pdf", []byte("%PDF-1.4..."))
+    // 1. Initialize builder
+        builder := mimebuilder.New()
 
-    // 2. Build the raw MIME byte slice
-    // Uses bytebufferpool for 0 B/op performance
-		    raw, err := m.Build()
-		    if err != nil {
-		        panic(err)
-		    }
+    // 2. Chain email data and build
+    // Returns a pooled buffer for 0 B/op performance
+        mime, err := builder.SetFrom("Your Name", "yourname@example.com").
+            AddTo("Helmi Aziz", "helmi@xeno.com.my").
+            SetSubject("High Performance MIME").
+            SetBody("<h1>Hello!</h1><p>Sent via go-mimebuilder.</p>").AsHTML().
+            SetAltBody("Hello! Sent via go-mimebuilder.").
+            Attach("document.pdf", []byte("%PDF-1.4...")).
+            Build()
 
-    // 3. Send via SMTP or save to an .eml file
-	    fmt.Printf("Generated %d bytes of MIME data\n", len(raw))
-	    os.WriteFile("message.eml", raw, 0644)
+        if err != nil {
+            panic(err)
+        }
+
+    // 3. Essential: Return the buffer to the pool when finished
+        defer builder.Release(mime)
+
+    // 4. Access the raw bytes
+        raw := mime.Bytes()
+
+    // 5. Use the data (e.g., save to .eml or send via SMTP)
+        fmt.Printf("Generated %d bytes of MIME data\n", len(raw))
+        os.WriteFile("message.eml", raw, 0644)
 }
 ```
