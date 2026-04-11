@@ -64,15 +64,17 @@ func main() {
 }
 ```
 
-## Performance Benchmark
+### Performance Results
 
-MimeBuilder was designed for zero‑allocation email construction.  
-Benchmarks confirm this design goal:
+| Scenario                | ns/op   | B/op | allocs/op | Total Requests | Duration   | Throughput (req/sec) |
+|-------------------------|---------|------|-----------|----------------|------------|----------------------|
+| BenchmarkMimeBuilder    | 459.6   | 0    | 0         | auto‑scaled    | ~2.57s     | —                    |
+| Stress Test (1M runs)   | —       | 0    | 0         | 1,000,000      | 367.6 ms   | 2,720,118            |
 
-| Scenario               | ns/op | B/op | allocs/op |
-|------------------------|-------|------|-----------|
-| HTML body (steady‑state)| 415   | 0    | 0         |
+**Environment:** Go 1.22, Windows 11, Intel i5‑4300U @ 1.90GHz  
 
-**Key takeaway:** After pool warm‑up, MimeBuilder builds messages with **zero allocations per operation**, ensuring GC‑free throughput for high‑volume workloads.
+**Key takeaway:**  
+- The micro‑benchmark confirms **zero allocations per operation** with ~460 ns/op steady‑state performance.  
+- The stress test shows the library can process **1 million requests in under 0.4 seconds**, sustaining ~2.7 million requests per second with zero allocations.
 
 ![Benchmark Test](benchmark.jpg)
