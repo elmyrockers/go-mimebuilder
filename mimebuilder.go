@@ -725,7 +725,6 @@ func (m *MimeBuilder) Build() (*bytebufferpool.ByteBuffer, error) {
 				m.buildPlainText( buf )
 			}
 
-	// fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
 	return buf, nil
 }
 
