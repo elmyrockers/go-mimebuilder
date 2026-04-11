@@ -8,7 +8,6 @@ import (
 	// "fmt"
 	"time"
 	"os"
-	"crypto/rand"
 	"encoding/binary"
 	"encoding/base64"
 
@@ -417,7 +416,8 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 func (m *MimeBuilder) setBoundaries() {
 	// Fetch current entropy (Time ^ Salt ^ PID)
 		var salt [16]byte
-		rand.Read( salt[:] )
+		// rand.Read( salt[:] )
+		setRandomBytes( salt[:] )
 		firstHalf := binary.LittleEndian.Uint64(salt[0:8])
 		secondHalf := binary.LittleEndian.Uint64(salt[8:16])
 
