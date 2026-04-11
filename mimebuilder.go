@@ -425,8 +425,6 @@ func (m *MimeBuilder) setBoundaries() {
 		firstHalf ^= nanoTime
 		secondHalf ^= (uint64(pid) << 32)
 
-		// fmt.Println( "Salt:",salt, "\nFirsthalf:", firstHalf, "\nSecondHalf:", secondHalf )
-
 	// 32-bytes of hex
 		// Encode FirstHalf (0-15)
 			const hexTable = "0123456789abcdef"
@@ -443,8 +441,6 @@ func (m *MimeBuilder) setBoundaries() {
 				boundary[16+i*2] = hexTable[b>>4]
 				boundary[16+i*2+1] = hexTable[b&0x0f]
 			}
-
-		// fmt.Println( "\nBoundary: ", boundary, "\nBoundary String: ", string(boundary[:]) )
 		
 	// Generate mixed, alternative & related boundaries
 		boundary[31] = '1'
@@ -455,8 +451,6 @@ func (m *MimeBuilder) setBoundaries() {
 
 		boundary[31] = 'e'
 		copy( m.relBoundary[:], boundary[:] )
-
-	// fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
 }
 
 /***************************
