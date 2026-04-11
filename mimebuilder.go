@@ -5,7 +5,7 @@ package mimebuilder
 import (
 	"io"
 	"unsafe"
-	"fmt"
+	// "fmt"
 	"time"
 	"os"
 	"crypto/rand"
@@ -675,10 +675,9 @@ func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
 		buf.Write(str2bytes( "--\r\n" ))
 }
 
-func (m *MimeBuilder) Build() ([]byte, error) {
+func (m *MimeBuilder) Build() (*bytebufferpool.ByteBuffer, error) {
 	// Borrow a high-performance buffer from the pool
 		buf := bytebufferpool.Get()
-		defer bytebufferpool.Put(buf)
 
 	// Generate header
 		// (from, to, cc, bcc, reply-to)
@@ -726,16 +725,13 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 				m.buildPlainText( buf )
 			}
 
-	fmt.Println("--- DEBUG START ---")
-	fmt.Println(buf.String())
-	fmt.Println("--- DEBUG END ---")
-
-
 	// fmt.Println( "\n\nMixed: ", m.mixedBoundary, "\nAlt: ", m.altBoundary, "\nRelated: ", m.relBoundary )
-	return nil,nil
+	return buf, nil
 }
 
-
+func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
+	bytebufferpool.Put( buf )
+}
 
 /*
 	CONSTRUCT----------
@@ -759,7 +755,7 @@ func (m *MimeBuilder) Build() ([]byte, error) {
 		- AttachStream(filename string, r io.Reader) // alias of AttachReader()
 
 	GENERATE-----------
-		- Build() ([]byte, error)
+		- Build() (*bytebufferpool.ByteBuffer, error)
 		- Bytes() ([]byte, error) // alias of Build()
 		- WriteTo(w io.Writer) error
 */
