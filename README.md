@@ -74,3 +74,5 @@ Benchmarks confirm this design goal:
 | HTML body (steady‑state)| 415   | 0    | 0         |
 
 **Key takeaway:** After pool warm‑up, MimeBuilder builds messages with **zero allocations per operation**, ensuring GC‑free throughput for high‑volume workloads.
+
+![Benchmark Test](benchmark.jpg)
