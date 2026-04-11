@@ -68,13 +68,13 @@ func main() {
 
 | Scenario                | ns/op   | B/op | allocs/op | Total Requests | Duration   | Throughput (req/sec) |
 |-------------------------|---------|------|-----------|----------------|------------|----------------------|
-| BenchmarkMimeBuilder    | 459.6   | 0    | 0         | auto‑scaled    | ~2.57s     | —                    |
-| Stress Test (1M runs)   | —       | 0    | 0         | 1,000,000      | 367.6 ms   | 2,720,118            |
+| BenchmarkMimeBuilder    | 384.2   | 0    | 0         | auto‑scaled    | ~1.91s     | —                    |
+| Stress Test (1M runs)   | —       | 0    | 0         | 1,000,000      | 334.2 ms   | 2,991,636            |
 
-**Environment:** Go 1.26.1, Windows 11, Intel i5‑4300U @ 1.90GHz  
+**Environment:** Go 1.26.1, Linux Ubuntu, Intel i5‑4300U @ 1.90GHz  
 
 ### **Key takeaway:**  
-> - The micro‑benchmark confirms **zero allocations per operation** with ~460 ns/op steady‑state performance.  
-> - The stress test shows the library can process **1 million requests in under 0.4 seconds**, sustaining ~2.7 million requests per second with zero allocations.
+- The micro‑benchmark confirms **zero allocations per operation** with ~384 ns/op steady‑state performance.  
+- The stress test shows the library can process **1 million requests in ~0.33 seconds**, sustaining ~2.99 million requests per second with zero allocations.
 
 ![Benchmark Test](benchmark.jpg)
