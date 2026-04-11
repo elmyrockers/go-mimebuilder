@@ -5,7 +5,6 @@ package mimebuilder
 import (
 	"io"
 	"unsafe"
-	// "fmt"
 	"time"
 	"os"
 	"encoding/binary"
@@ -416,7 +415,6 @@ func (m *MimeBuilder) AttachStream(filename string, r io.Reader) *MimeBuilder {
 func (m *MimeBuilder) setBoundaries() {
 	// Fetch current entropy (Time ^ Salt ^ PID)
 		var salt [16]byte
-		// rand.Read( salt[:] )
 		setRandomBytes( salt[:] )
 		firstHalf := binary.LittleEndian.Uint64(salt[0:8])
 		secondHalf := binary.LittleEndian.Uint64(salt[8:16])
@@ -590,8 +588,6 @@ func (m *MimeBuilder) buildHtml( buf *bytebufferpool.ByteBuffer ){
 		buf.Write(str2bytes( "\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n" ))
 	// <html><body><p>Hello in HTML</p></body></html>
 		qpEncode( buf, m.body )
-
-		// buf.Write(str2bytes("\r\n"))
 }
 
 func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
@@ -605,7 +601,6 @@ func (m *MimeBuilder) buildPlainText( buf *bytebufferpool.ByteBuffer ){
 		} else {
 			qpEncode( buf, m.altBody )
 		}
-		// buf.Write(str2bytes("\r\n"))
 }
 
 func (m *MimeBuilder) buildInlineImages( buf *bytebufferpool.ByteBuffer ){
