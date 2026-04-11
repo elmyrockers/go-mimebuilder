@@ -64,7 +64,7 @@ func main() {
 }
 ```
 
-### Performance Results
+## Performance Results
 
 | Scenario                | ns/op   | B/op | allocs/op | Total Requests | Duration   | Throughput (req/sec) |
 |-------------------------|---------|------|-----------|----------------|------------|----------------------|
