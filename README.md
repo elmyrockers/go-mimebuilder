@@ -64,7 +64,7 @@ func main() {
 }
 ```
 
-### Performance Benchmark
+## Performance Benchmark
 
 MimeBuilder was designed for zero‑allocation email construction.  
 Benchmarks confirm this design goal:
