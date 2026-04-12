@@ -282,11 +282,16 @@ func encodeBase64(buf *bytebufferpool.ByteBuffer, data []byte) {
 		}
 }
 
-func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
+func (m *MimeBuilder) SetFrom( email string, name string ) *MimeBuilder {
 	// Reset the internal buffer (Keep the RAM, set length to 0)
 		m.from = m.from[:0]
 
 	// Set name and email
+		if len(name)==0 {
+			m.from = append(m.from, str2bytes(email)...)
+			return m
+		}
+
 		m.from = append(m.from, str2bytes(name)...)
 		m.from = append(m.from, " <"...)
 		m.from = append(m.from, str2bytes(email)...)
@@ -295,13 +300,18 @@ func (m *MimeBuilder) SetFrom(name string, email string) *MimeBuilder {
 	return m
 }
 
-func (m *MimeBuilder) AddTo(name string, email string) *MimeBuilder {
+func (m *MimeBuilder) AddTo( email string, name string ) *MimeBuilder {
 	// Append comma to add new address
 		if len(m.to) > 0 {
 			m.to = append(m.to, ", "...)
 		}
 
 	// Set name and email
+		if len(name)==0 {
+			m.to = append(m.to, str2bytes(email)...)
+			return m
+		}
+
 		m.to = append(m.to, str2bytes(name)...)
 		m.to = append(m.to, " <"...)
 		m.to = append(m.to, str2bytes(email)...)
@@ -317,6 +327,10 @@ func (m *MimeBuilder) AddCC( email string, name string ) *MimeBuilder {
 		}
 
 	// Set name and email
+		if len(name)==0 {
+			m.cc = append(m.cc, str2bytes(email)...)
+			return m
+		}
 		m.cc = append(m.cc, str2bytes(name)...)
 		m.cc = append(m.cc, " <"...)
 		m.cc = append(m.cc, str2bytes(email)...)
@@ -332,6 +346,10 @@ func (m *MimeBuilder) AddBCC( email string, name string ) *MimeBuilder {
 		}
 
 	// Set name and email
+		if len(name)==0 {
+			m.bcc = append(m.bcc, str2bytes(email)...)
+			return m
+		}
 		m.bcc = append(m.bcc, str2bytes(name)...)
 		m.bcc = append(m.bcc, " <"...)
 		m.bcc = append(m.bcc, str2bytes(email)...)
@@ -347,6 +365,10 @@ func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 		}
 
 	// Set name and email
+		if len(name)==0 {
+			m.replyTo = append(m.replyTo, str2bytes(email)...)
+			return m
+		}
 		m.replyTo = append(m.replyTo, str2bytes(name)...)
 		m.replyTo = append(m.replyTo, " <"...)
 		m.replyTo = append(m.replyTo, str2bytes(email)...)
@@ -740,12 +762,12 @@ func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 		- New()
 
 	HEADER-------------
-		- SetFrom()
-		- AddTo()
-		- AddCC()
-		- AddBCC()
-		- AddReplyTo()
-		- SetSubject()
+		- SetFrom( email string, name string )
+		- AddTo( email string, name string )
+		- AddCC( email string, name string )
+		- AddBCC( email string, name string )
+		- AddReplyTo( email string, name string )
+		- SetSubject( subject string )
 
 	BODY---------------
 		- SetBody().AsHTML()
