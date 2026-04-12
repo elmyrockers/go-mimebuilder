@@ -19,7 +19,7 @@ func init() {
 
 // setRandomBytes claims 16 bytes from the reservoir atomically
 func setRandomBytes(b []byte) {
-	size := uint32(len(b))
+	size := uint32(len(b)) // 16
 	
 	// Atomically move the cursor
 		newVal := entropyIdx.Add(size)
