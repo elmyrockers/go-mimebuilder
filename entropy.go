@@ -24,9 +24,9 @@ func setRandomBytes(b []byte) {
 	// Atomically move the cursor
 		newVal := entropyIdx.Add(size)
 
-	// If we exceed 1024, wrap around (Modulo)
-	// This ensures we never overflow and keep reusing the buffer
-		idx := (newVal - size) % 1024
+	// Bitwise mask to wrap the index safely within 0-1008
+	// (1024 - 16 = 1008). This ensures idx + 16 never exceeds 1024.
+		idx := (newVal - size) & (1024 - size)
 
 	// If it wraps around, we are still safe because our setBoundaries()
 	// XORs this with the current Nanosecond time and PID.
