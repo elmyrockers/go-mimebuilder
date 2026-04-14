@@ -770,8 +770,8 @@ func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 		- SetSubject( subject string )
 
 	BODY---------------
-		- SetBody().AsHTML()
-		- SetAltBody()
+		- SetBody( content string ).AsHTML()
+		- SetAltBody( content string )
 
 		- Embed(filename string, data []byte, cid string)
 		- Attach(filename string, data []byte)
@@ -780,6 +780,6 @@ func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 
 	GENERATE-----------
 		- Build() (*bytebufferpool.ByteBuffer, error)
-		- Bytes() ([]byte, error) // alias of Build()
 		- WriteTo(w io.Writer) error
+		- Release(buf *bytebufferpool.ByteBuffer)
 */
