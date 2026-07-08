@@ -314,13 +314,13 @@ func (m *MimeBuilder) SetFrom( email string, name string ) *MimeBuilder {
 
 	// Set name and email
 		if len(name)==0 {
-			m.from = append(m.from, str2bytes(email)...)
+			m.from = appendSanitized( m.from, email )
 			return m
 		}
 
-		m.from = append(m.from, str2bytes(name)...)
+		m.from = appendSanitized( m.from, name )
 		m.from = append(m.from, " <"...)
-		m.from = append(m.from, str2bytes(email)...)
+		m.from = appendSanitized( m.from, email )
 		m.from = append(m.from, ">"...)
 
 	return m
@@ -334,13 +334,13 @@ func (m *MimeBuilder) AddTo( email string, name string ) *MimeBuilder {
 
 	// Set name and email
 		if len(name)==0 {
-			m.to = append(m.to, str2bytes(email)...)
+			m.to = appendSanitized( m.to, email )
 			return m
 		}
 
-		m.to = append(m.to, str2bytes(name)...)
+		m.to = appendSanitized( m.to, name )
 		m.to = append(m.to, " <"...)
-		m.to = append(m.to, str2bytes(email)...)
+		m.to = appendSanitized( m.to, email )
 		m.to = append(m.to, ">"...)
 		
 	 return m
@@ -354,12 +354,12 @@ func (m *MimeBuilder) AddCC( email string, name string ) *MimeBuilder {
 
 	// Set name and email
 		if len(name)==0 {
-			m.cc = append(m.cc, str2bytes(email)...)
+			m.cc = appendSanitized( m.cc, email )
 			return m
 		}
-		m.cc = append(m.cc, str2bytes(name)...)
+		m.cc = appendSanitized( m.cc, name )
 		m.cc = append(m.cc, " <"...)
-		m.cc = append(m.cc, str2bytes(email)...)
+		m.cc = appendSanitized( m.cc, email )
 		m.cc = append(m.cc, ">"...)
 		
 	 return m
@@ -373,12 +373,12 @@ func (m *MimeBuilder) AddBCC( email string, name string ) *MimeBuilder {
 
 	// Set name and email
 		if len(name)==0 {
-			m.bcc = append(m.bcc, str2bytes(email)...)
+			m.bcc = appendSanitized( m.bcc, email )
 			return m
 		}
-		m.bcc = append(m.bcc, str2bytes(name)...)
+		m.bcc = appendSanitized( m.bcc, name )
 		m.bcc = append(m.bcc, " <"...)
-		m.bcc = append(m.bcc, str2bytes(email)...)
+		m.bcc = appendSanitized( m.bcc, email )
 		m.bcc = append(m.bcc, ">"...)
 		
 	 return m
@@ -392,12 +392,12 @@ func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 
 	// Set name and email
 		if len(name)==0 {
-			m.replyTo = append(m.replyTo, str2bytes(email)...)
+			m.replyTo = appendSanitized( m.replyTo, email )
 			return m
 		}
-		m.replyTo = append(m.replyTo, str2bytes(name)...)
+		m.replyTo = appendSanitized( m.replyTo, name )
 		m.replyTo = append(m.replyTo, " <"...)
-		m.replyTo = append(m.replyTo, str2bytes(email)...)
+		m.replyTo = appendSanitized( m.replyTo, email )
 		m.replyTo = append(m.replyTo, ">"...)
 		
 	 return m
@@ -405,7 +405,8 @@ func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 
 func (m *MimeBuilder) SetSubject(subject string) *MimeBuilder {
 	m.subject = m.subject[:0]
-	m.subject = append(m.subject, str2bytes(subject)...)
+	m.subject = appendSanitized( m.subject, subject )
+	
 	return m
 }
 
