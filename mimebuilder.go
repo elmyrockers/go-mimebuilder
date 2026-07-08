@@ -47,6 +47,7 @@ type MimeBuilder struct {
 }
 
 func New() *MimeBuilder {
+
 	return &MimeBuilder{
 		// Headers: Usually short, < 128 bytes
 			from:    make([]byte, 0, 64),
@@ -406,7 +407,7 @@ func (m *MimeBuilder) AddReplyTo( email string, name string ) *MimeBuilder {
 func (m *MimeBuilder) SetSubject(subject string) *MimeBuilder {
 	m.subject = m.subject[:0]
 	m.subject = appendSanitized( m.subject, subject )
-	
+
 	return m
 }
 
@@ -432,25 +433,32 @@ func (m *MimeBuilder) SetAltBody( content string ) *MimeBuilder {
 // data: The raw bytes of the image
 // cid:  The unique ID used in HTML (e.g., "company_logo")
 func (m *MimeBuilder) Embed(name string, data []byte, cid string) *MimeBuilder {
+	filename := appendSanitized(make([]byte, 0, len(name)), name)
+	contentID := appendSanitized(make([]byte, 0, len(cid)), cid)
+
 	m.inlineImages = append(m.inlineImages, InlineImage{
-		Filename: str2bytes(name),
+		Filename: filename,
 		Data:      data,
-		ContentID: str2bytes(cid),
+		ContentID: contentID,
 	})
 	return m
 }
 
 func (m *MimeBuilder) Attach(filename string, data []byte) *MimeBuilder {
+	name := appendSanitized(make([]byte, 0, len(filename)), filename)
+
 	m.attachments = append(m.attachments, Attachment{
-		Filename: str2bytes(filename),
+		Filename: name,
 		Data:     data,
 	})
 	return m
 }
 
 func (m *MimeBuilder) AttachReader(filename string, r io.Reader) *MimeBuilder {
+	name := appendSanitized(make([]byte, 0, len(filename)), filename)
+
 	m.attachments = append(m.attachments, Attachment{
-		Filename: str2bytes(filename),
+		Filename: name,
 		Stream:   r,
 	})
 	return m
