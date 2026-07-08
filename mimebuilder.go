@@ -77,6 +77,32 @@ func str2bytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
+// containsCRLF reports whether value contains \r or \n (header injection).
+func containsCRLF(value string) bool {
+	for i := 0; i < len(value); i++ {
+		if value[i] == '\r' || value[i] == '\n' {
+			return true
+		}
+	}
+	return false
+}
+
+// appendSanitized appends value to buf, stripping \r and \n to prevent
+// header injection. Uses a fast path when value is already clean.
+func appendSanitized(buf []byte, value string) []byte {
+	if !containsCRLF(value) {
+		return append(buf, str2bytes(value)...)
+	}
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+		if c == '\r' || c == '\n' {
+			continue
+		}
+		buf = append(buf, c)
+	}
+	return buf
+}
+
 func qpEncode(buf *bytebufferpool.ByteBuffer, data []byte) {
 	const hexTable = "0123456789ABCDEF"
 	lineLen := 0
