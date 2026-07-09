@@ -774,6 +774,8 @@ func (m *MimeBuilder) Build() (*bytebufferpool.ByteBuffer, error) {
 	return buf, nil
 }
 
+func (m *MimeBuilder) WriteTo(w io.Writer) error {}
+
 func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 	bytebufferpool.Put( buf )
 
