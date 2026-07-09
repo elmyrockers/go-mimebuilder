@@ -17,7 +17,13 @@ func init() {
 		_, _ = rand.Read(entropy[:])
 }
 
-// setRandomBytes claims 16 bytes from the reservoir atomically
+// setRandomBytes() claims 16 bytes from the reservoir atomically.
+// This function is used exclusively for MIME boundary generation.
+// The reservoir is filled once at startup and never refreshed;
+// this is safe here because setBoundaries() always XORs the result
+// with a fresh nanosecond timestamp and PID. Do not reuse this
+// function for tokens, keys, or anything requiring independent
+// per-call randomness without adding a refresh mechanism.
 func setRandomBytes(b []byte) {
 	size := uint32(len(b)) // 16
 	
