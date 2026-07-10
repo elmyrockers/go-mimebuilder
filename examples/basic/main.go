@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	// emailjpg, _ := os.ReadFile( "../../email.jpg" )
-	checkpng, _ := os.ReadFile( "../../check.png" )
-	// informationpng, _ := os.ReadFile( "../../Information_icon.svg.png" )
+	favoritepng, _ := os.ReadFile( "favorite.png" )
+	idolpng, _ := os.ReadFile( "idol.png" )
+	moorishpng, _ := os.ReadFile( "moorish-idol.png" )
 	builder := mimebuilder.New()
 
 	mime, _ := builder.
@@ -34,13 +34,23 @@ func main() {
 					AsHTML().
 					// SetBody( "Ini adalah plain 100%" ).
 					SetAltBody( "Ini adalâh plain 100%" ).
-					Embed( "check.png", checkpng, "cid1" ).
-					// Embed( "information.png", informationpng, "cid2" ).
-					// Attach( "email.jpg", emailjpg ).
-					// Attach( "check.png", checkpng ).
+					Embed( "favorite.png", favoritepng, "cid1" ).
+					Embed( "idol.png", idolpng, "cid2" ).
+					
+					Attach( "moorish-idol.png", moorishpng ).
 					Build()
 	defer builder.Release(mime)
 
 	fmt.Print( mime.String() )
 	// fmt.Println( data )
 }
+
+/*******************************************
+ *  Plain-text only
+ * 	HTML only
+ * 	Alternative
+ *  	- Plain-text and html
+ * 		- text, html and embed
+ * 		
+ * 
+ * ****************************************/
