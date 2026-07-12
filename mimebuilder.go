@@ -821,6 +821,7 @@ func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 
 		- Embed(filename string, data []byte, cid string)
 		- Attach(filename string, data []byte)
+		- AttachFile( path string)
 		- AttachReader(filename string, r io.Reader)
 		- AttachStream(filename string, r io.Reader) // alias of AttachReader()
 
