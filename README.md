@@ -1,6 +1,6 @@
 # go-mimebuilder
 [![Go Reference](https://pkg.go.dev/badge/github.com/elmyrockers/go-mimebuilder.svg)](https://pkg.go.dev/github.com/elmyrockers/go-mimebuilder)
-[![Go Version](https://img.shields.io/badge/go1.20+-00ADD8?logo=go&logoColor=white)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/go1.26+-00ADD8?logo=go&logoColor=white)](https://golang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <div align="center">
