@@ -12,9 +12,9 @@
 ## Why go-mimebuilder?
 - **Zero-Allocation Architecture:** Uses `bytebufferpool` to recycle memory, drastically reducing GC overhead on low-RAM (1GB) VPS instances.
 - **High-Speed String Handling:** Implements `unsafe` pointer arithmetic for zero-copy string-to-byte conversions, ensuring lightning-fast header construction.
-- **Preallocated Buffers:** Slices are pre-sized to `4KB` (OS page size) to eliminate memory fragmentation and "realloc" lag.
+- **Preallocated Buffers:** Body content buffers are pre-sized to `4KB` (OS page size) to reduce reallocation overhead for typical email bodies.
 - **Smart MIME Nesting:** Automatically manages complex `mixed`, `alternative`, and `related` structures based on your content.
-- **RFC 5322 Compliant:** Strictly enforces `\r\n` (CRLF) endings and proper headers to ensure 100% deliverability.
+- **Header Injection Protection:** All headers use sanitized CRLF-safe construction to prevent injection attacks.
 - **Fluent API:** Clean, chainable method syntax for building complex emails in a single, readable block.
 - **Inline Image Support (CID):** Full support for embedding images directly into HTML bodies using unique Content-IDs.
 - **Dual-Mode Attachments:** Flexible support for attaching raw `[]byte` or streaming via `io.Reader` for large file handling.
