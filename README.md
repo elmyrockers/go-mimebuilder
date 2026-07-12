@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <div align="center">
-    <img src="email.jpg" width="500" />
+    <img src="img/email.jpg" width="500" />
 </div><br>
 
 **A High-Performance, Zero-Allocation Go library for generating raw MIME messages.** Designed for high-concurrency systems and low-memory environments, it produces standards-compliant output ready for any SMTP client, mail server, or cloud API.
@@ -23,7 +23,7 @@
 
 Install the library:
 ```bash
-go get github.com/elmyrockers/go-mimebuilder
+go get github.com/elmyrockers/go-mimebuilder@latest
 ```
 
 Basic Example:
@@ -80,4 +80,4 @@ func main() {
 >- The micro‑benchmark confirms **zero allocations per operation** with ~384 ns/op steady‑state performance.  
 >- The stress test shows the library can process **1 million requests in ~0.33 seconds**, sustaining ~2.99 million requests per second with zero allocations.
 
-![Benchmark Test](benchmark.jpg)
+![Benchmark Test](img/benchmark.jpg)
