@@ -4,6 +4,7 @@
 package mimebuilder
 
 import (
+	"encoding/base64"
 	"strings"
 	"testing"
 
@@ -248,4 +249,72 @@ func TestQEncodeSubject_DoesNotSplitMultiByteUTF8Char(t *testing.T) {
 	// never interrupted by a fold sequence in the middle.
 	emojiHex := "=F0=9F=98=80" // UTF-8 encoding of 😀
 	assert.Contains(t, got, emojiHex, "expected emoji to appear fully encoded and uninterrupted")
+}
+
+func TestEncodeBase64(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []byte
+	}{
+		{"empty data", []byte{}},
+		{"small data", []byte("hello")},
+		{"exactly one chunk (57 bytes)", []byte(strings.Repeat("a", 57))},
+		{"multiple chunks (150 bytes)", []byte(strings.Repeat("b", 150))},
+		{"binary data", []byte{0x00, 0xFF, 0x10, 0x20, 0xAB, 0xCD}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := bytebufferpool.Get()
+			defer bytebufferpool.Put(buf)
+
+			encodeBase64(buf, tt.in)
+
+			got := string(buf.B)
+
+			if len(tt.in) == 0 {
+				assert.Empty(t, got, "expected no output for empty input")
+				return
+			}
+
+			// Strip the CRLF line breaks encodeBase64 inserts every 76 chars,
+			// then confirm the decoded result matches the original input.
+			cleaned := strings.ReplaceAll(got, "\r\n", "")
+			decoded, err := base64.StdEncoding.DecodeString(cleaned)
+			assert.NoError(t, err, "expected valid base64 output")
+			assert.Equal(t, tt.in, decoded, "expected decoded output to match original input")
+		})
+	}
+}
+
+func TestEncodeBase64_LineWrapping(t *testing.T) {
+	// MIME base64 requires a line break every 76 encoded characters.
+	// 57 input bytes -> 76 encoded chars is the standard chunk size used here.
+	data := []byte(strings.Repeat("x", 57*2)) // two full chunks
+
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	encodeBase64(buf, data)
+
+	got := string(buf.B)
+	lines := strings.Split(strings.TrimRight(got, "\r\n"), "\r\n")
+
+	for i, line := range lines {
+		if i == len(lines)-1 {
+			continue // last line may be shorter
+		}
+		assert.LessOrEqual(t, len(line), 76, "expected each base64 line to be at most 76 characters")
+	}
+}
+
+func TestEncodeBase64_AppendsToExistingBuffer(t *testing.T) {
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	buf.Write([]byte("prefix:"))
+	encodeBase64(buf, []byte("data"))
+
+	got := string(buf.B)
+	assert.True(t, strings.HasPrefix(got, "prefix:"), "expected encodeBase64 to append, not overwrite existing buffer content")
 }
