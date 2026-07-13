@@ -571,3 +571,19 @@ func TestAsHTML(t *testing.T) {
 	assert.Same(t, m, result, "AsHTML should return the same *MimeBuilder for chaining")
 	assert.True(t, m.isHTML)
 }
+
+func TestSetAltBody(t *testing.T) {
+	m := New()
+	result := m.SetAltBody("Plain fallback")
+
+	assert.Same(t, m, result, "SetAltBody should return the same *MimeBuilder for chaining")
+	assert.Equal(t, "Plain fallback", string(m.altBody))
+}
+
+func TestSetAltBody_OverwritesOnSecondCall(t *testing.T) {
+	m := New()
+	m.SetAltBody("First")
+	m.SetAltBody("Second")
+
+	assert.Equal(t, "Second", string(m.altBody))
+}
