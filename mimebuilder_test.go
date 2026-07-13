@@ -251,6 +251,39 @@ func TestQEncodeSubject_DoesNotSplitMultiByteUTF8Char(t *testing.T) {
 	assert.Contains(t, got, emojiHex, "expected emoji to appear fully encoded and uninterrupted")
 }
 
+func TestGetMimeType(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		want     string
+	}{
+		{"pdf", "report.pdf", "application/pdf"},
+		{"docx", "file.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+		{"xlsx", "sheet.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+		{"png", "logo.png", "image/png"},
+		{"jpg", "photo.jpg", "image/jpeg"},
+		{"jpeg", "photo.jpeg", "image/jpeg"},
+		{"svg", "icon.svg", "image/svg+xml"},
+		{"txt", "notes.txt", "text/plain"},
+		{"csv", "data.csv", "text/csv"},
+		{"zip", "archive.zip", "application/zip"},
+		{"mp4", "video.mp4", "video/mp4"},
+		{"unknown extension", "file.xyz", "application/octet-stream"},
+		{"no extension", "filenoext", "application/octet-stream"},
+		{"trailing dot", "file.", "application/octet-stream"},
+		{"dot in directory but no ext", "/path.dir/file", "application/octet-stream"},
+		{"empty filename", "", "application/octet-stream"},
+		{"uppercase extension not matched", "FILE.PDF", "application/octet-stream"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getMimeType([]byte(tt.filename))
+			assert.Equal(t, tt.want, string(got))
+		})
+	}
+}
+
 func TestEncodeBase64(t *testing.T) {
 	tests := []struct {
 		name string
