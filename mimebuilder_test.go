@@ -562,3 +562,12 @@ func TestSetBody_OverwritesOnSecondCall(t *testing.T) {
 
 	assert.Equal(t, "Second", string(m.body))
 }
+
+func TestAsHTML(t *testing.T) {
+	m := New()
+	assert.False(t, m.isHTML)
+
+	result := m.AsHTML()
+	assert.Same(t, m, result, "AsHTML should return the same *MimeBuilder for chaining")
+	assert.True(t, m.isHTML)
+}
