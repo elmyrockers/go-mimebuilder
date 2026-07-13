@@ -587,3 +587,34 @@ func TestSetAltBody_OverwritesOnSecondCall(t *testing.T) {
 
 	assert.Equal(t, "Second", string(m.altBody))
 }
+
+func TestEmbed(t *testing.T) {
+	m := New()
+	data := []byte{0x01, 0x02, 0x03}
+	result := m.Embed("logo.png", data, "company_logo")
+
+	assert.Same(t, m, result, "Embed should return the same *MimeBuilder for chaining")
+	require.Len(t, m.inlineImages, 1)
+	assert.Equal(t, "logo.png", string(m.inlineImages[0].Filename))
+	assert.Equal(t, data, m.inlineImages[0].Data)
+	assert.Equal(t, "company_logo", string(m.inlineImages[0].ContentID))
+}
+
+func TestEmbed_SanitizesFilenameAndCID(t *testing.T) {
+	m := New()
+	m.Embed("logo\r\n.png", []byte{}, "cid\r\ninjected")
+
+	require.Len(t, m.inlineImages, 1)
+	assert.Equal(t, "logo.png", string(m.inlineImages[0].Filename))
+	assert.Equal(t, "cidinjected", string(m.inlineImages[0].ContentID))
+}
+
+func TestEmbed_MultipleAppends(t *testing.T) {
+	m := New()
+	m.Embed("a.png", []byte{}, "cid_a")
+	m.Embed("b.png", []byte{}, "cid_b")
+
+	require.Len(t, m.inlineImages, 2)
+	assert.Equal(t, "a.png", string(m.inlineImages[0].Filename))
+	assert.Equal(t, "b.png", string(m.inlineImages[1].Filename))
+}
