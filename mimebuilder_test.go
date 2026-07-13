@@ -106,3 +106,18 @@ func TestAppendSanitized(t *testing.T) {
 		})
 	}
 }
+
+func TestAppendSanitized_AppendsToExistingBuffer(t *testing.T) {
+	buf := []byte("prefix: ")
+	buf = appendSanitized(buf, "clean value")
+
+	assert.Equal(t, "prefix: clean value", string(buf))
+}
+
+func TestAppendSanitized_AppendsToExistingBufferWithInjection(t *testing.T) {
+	buf := []byte("prefix: ")
+	buf = appendSanitized(buf, "value\r\nX-Injected: true")
+
+	assert.Equal(t, "prefix: valueX-Injected: true", string(buf))
+}
+
