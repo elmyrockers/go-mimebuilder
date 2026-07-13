@@ -390,3 +390,34 @@ func TestAddTo_DoesNotResetBetweenCalls(t *testing.T) {
 	assert.Contains(t, string(m.to), "a@example.com", "expected first AddTo call to persist")
 	assert.Contains(t, string(m.to), "b@example.com", "expected second AddTo call to be appended, not overwrite")
 }
+
+func TestAddCC(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		label string
+		want  string
+	}{
+		{"with display name", "cc@example.com", "CC Person", "CC Person <cc@example.com>"},
+		{"email only, no name", "cc@example.com", "", "cc@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New()
+			result := m.AddCC(tt.email, tt.label)
+
+			assert.Same(t, m, result, "AddCC should return the same *MimeBuilder for chaining")
+			assert.Equal(t, tt.want, string(m.cc))
+		})
+	}
+}
+
+func TestAddCC_MultipleAppendsWithComma(t *testing.T) {
+	m := New()
+	m.AddCC("cc1@example.com", "CC One").
+		AddCC("cc2@example.com", "")
+
+	want := "CC One <cc1@example.com>, cc2@example.com"
+	assert.Equal(t, want, string(m.cc))
+}
