@@ -661,3 +661,26 @@ func TestAttachStream_IsAliasOfAttachReader(t *testing.T) {
 	assert.Equal(t, "stream.txt", string(m.attachments[0].Filename))
 	assert.Equal(t, r, m.attachments[0].Stream)
 }
+
+func TestSetBoundaries_AreUniquePerCall(t *testing.T) {
+	m1 := New()
+	m1.setBoundaries()
+
+	m2 := New()
+	m2.setBoundaries()
+
+	assert.NotEqual(t, m1.mixedBoundary, m2.mixedBoundary, "expected boundaries to differ across builder instances")
+
+	// Within the same builder, mixed/alt/rel boundaries should differ from each other
+	// (only the last hex nibble differs by design: '1', 'a', 'e')
+	assert.NotEqual(t, m1.mixedBoundary, m1.altBoundary)
+	assert.NotEqual(t, m1.altBoundary, m1.relBoundary)
+	assert.NotEqual(t, m1.mixedBoundary, m1.relBoundary)
+
+	// Only the last byte should differ between them
+	assert.Equal(t, m1.mixedBoundary[:31], m1.altBoundary[:31])
+	assert.Equal(t, m1.mixedBoundary[:31], m1.relBoundary[:31])
+	assert.Equal(t, byte('1'), m1.mixedBoundary[31])
+	assert.Equal(t, byte('a'), m1.altBoundary[31])
+	assert.Equal(t, byte('e'), m1.relBoundary[31])
+}
