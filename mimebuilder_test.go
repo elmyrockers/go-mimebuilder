@@ -546,3 +546,19 @@ func TestSetSubject_ResetsOnSecondCall(t *testing.T) {
 
 	assert.Equal(t, "Second Subject", string(m.subject), "expected SetSubject to overwrite, not append")
 }
+
+func TestSetBody(t *testing.T) {
+	m := New()
+	result := m.SetBody("Hello Body")
+
+	assert.Same(t, m, result, "SetBody should return the same *MimeBuilder for chaining")
+	assert.Equal(t, "Hello Body", string(m.body))
+}
+
+func TestSetBody_OverwritesOnSecondCall(t *testing.T) {
+	m := New()
+	m.SetBody("First")
+	m.SetBody("Second")
+
+	assert.Equal(t, "Second", string(m.body))
+}
