@@ -483,3 +483,33 @@ func TestAddReplyTo_MultipleAppendsWithComma(t *testing.T) {
 	want := "Reply One <reply1@example.com>, reply2@example.com"
 	assert.Equal(t, want, string(m.replyTo))
 }
+
+func TestSetSubject(t *testing.T) {
+	tests := []struct {
+		name    string
+		subject string
+		want    string
+	}{
+		{"normal subject", "Hello World", "Hello World"},
+		{"empty subject", "", ""},
+		{"subject with injection attempt", "Subject\r\nBcc: evil@x.com", "SubjectBcc: evil@x.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New()
+			result := m.SetSubject(tt.subject)
+
+			assert.Same(t, m, result, "SetSubject should return the same *MimeBuilder for chaining")
+			assert.Equal(t, tt.want, string(m.subject))
+		})
+	}
+}
+
+func TestSetSubject_ResetsOnSecondCall(t *testing.T) {
+	m := New()
+	m.SetSubject("First Subject")
+	m.SetSubject("Second Subject")
+
+	assert.Equal(t, "Second Subject", string(m.subject), "expected SetSubject to overwrite, not append")
+}
