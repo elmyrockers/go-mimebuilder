@@ -349,3 +349,44 @@ func TestSetFrom_ResetsOnSecondCall(t *testing.T) {
 
 	assert.Equal(t, "Second <second@example.com>", string(m.from), "expected SetFrom to overwrite, not append")
 }
+
+func TestAddTo(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		label string
+		want  string
+	}{
+		{"with display name", "jane@example.com", "Jane Doe", "Jane Doe <jane@example.com>"},
+		{"email only, no name", "jane@example.com", "", "jane@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New()
+			result := m.AddTo(tt.email, tt.label)
+
+			assert.Same(t, m, result, "AddTo should return the same *MimeBuilder for chaining")
+			assert.Equal(t, tt.want, string(m.to))
+		})
+	}
+}
+
+func TestAddTo_MultipleAppendsWithComma(t *testing.T) {
+	m := New()
+	m.AddTo("first@example.com", "First").
+		AddTo("second@example.com", "Second").
+		AddTo("third@example.com", "")
+
+	want := "First <first@example.com>, Second <second@example.com>, third@example.com"
+	assert.Equal(t, want, string(m.to))
+}
+
+func TestAddTo_DoesNotResetBetweenCalls(t *testing.T) {
+	m := New()
+	m.AddTo("a@example.com", "")
+	m.AddTo("b@example.com", "")
+
+	assert.Contains(t, string(m.to), "a@example.com", "expected first AddTo call to persist")
+	assert.Contains(t, string(m.to), "b@example.com", "expected second AddTo call to be appended, not overwrite")
+}
