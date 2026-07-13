@@ -618,3 +618,23 @@ func TestEmbed_MultipleAppends(t *testing.T) {
 	assert.Equal(t, "a.png", string(m.inlineImages[0].Filename))
 	assert.Equal(t, "b.png", string(m.inlineImages[1].Filename))
 }
+
+func TestAttach(t *testing.T) {
+	m := New()
+	data := []byte("file contents")
+	result := m.Attach("report.pdf", data)
+
+	assert.Same(t, m, result, "Attach should return the same *MimeBuilder for chaining")
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, "report.pdf", string(m.attachments[0].Filename))
+	assert.Equal(t, data, m.attachments[0].Data)
+	assert.Nil(t, m.attachments[0].Stream)
+}
+
+func TestAttach_SanitizesFilename(t *testing.T) {
+	m := New()
+	m.Attach("report\r\n.pdf", []byte("data"))
+
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, "report.pdf", string(m.attachments[0].Filename))
+}
