@@ -184,3 +184,68 @@ func TestQpEncode_SoftLineBreakAt72Chars(t *testing.T) {
 	got := string(buf.B)
 	assert.Contains(t, got, "=\r\n", "expected a soft line break to be inserted for lines exceeding 72 chars")
 }
+
+func TestQEncodeSubject(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"simple ascii", "Hello World", "\r\nSubject: =?UTF-8?Q?Hello_World?="},
+		{"empty subject", "", "\r\nSubject: =?UTF-8?Q??="},
+		{"non-ascii", "café", "\r\nSubject: =?UTF-8?Q?caf=C3=A9?="},
+		{"alphanumeric only", "Test123", "\r\nSubject: =?UTF-8?Q?Test123?="},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := bytebufferpool.Get()
+			defer bytebufferpool.Put(buf)
+
+			qEncodeSubject(buf, []byte(tt.in))
+
+			assert.Equal(t, tt.want, string(buf.B))
+		})
+	}
+}
+
+func TestQEncodeSubject_SpacesBecomeUnderscore(t *testing.T) {
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	qEncodeSubject(buf, []byte("a b c"))
+
+	got := string(buf.B)
+	assert.Equal(t, "\r\nSubject: =?UTF-8?Q?a_b_c?=", got)
+}
+
+func TestQEncodeSubject_LongSubjectFolds(t *testing.T) {
+	// A long subject should fold into multiple encoded-words separated by
+	// "?=\r\n =?UTF-8?Q?" once the line length threshold is hit.
+	longSubject := strings.Repeat("word ", 30) // 150 chars
+
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	qEncodeSubject(buf, []byte(longSubject))
+
+	got := string(buf.B)
+	assert.Contains(t, got, "?=\r\n =?UTF-8?Q?", "expected long subject to fold onto a continuation line")
+}
+
+func TestQEncodeSubject_DoesNotSplitMultiByteUTF8Char(t *testing.T) {
+	// Regression check: a multi-byte UTF-8 character (e.g. an emoji, 4 bytes)
+	// must never be split across two encoded-word segments.
+	subject := strings.Repeat("a", 60) + "😀" + strings.Repeat("b", 60)
+
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	qEncodeSubject(buf, []byte(subject))
+
+	got := string(buf.B)
+	// The emoji's hex-encoded bytes should appear as one contiguous block,
+	// never interrupted by a fold sequence in the middle.
+	emojiHex := "=F0=9F=98=80" // UTF-8 encoding of 😀
+	assert.Contains(t, got, emojiHex, "expected emoji to appear fully encoded and uninterrupted")
+}
