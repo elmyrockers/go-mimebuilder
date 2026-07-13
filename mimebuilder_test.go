@@ -421,3 +421,34 @@ func TestAddCC_MultipleAppendsWithComma(t *testing.T) {
 	want := "CC One <cc1@example.com>, cc2@example.com"
 	assert.Equal(t, want, string(m.cc))
 }
+
+func TestAddBCC(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		label string
+		want  string
+	}{
+		{"with display name", "bcc@example.com", "BCC Person", "BCC Person <bcc@example.com>"},
+		{"email only, no name", "bcc@example.com", "", "bcc@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New()
+			result := m.AddBCC(tt.email, tt.label)
+
+			assert.Same(t, m, result, "AddBCC should return the same *MimeBuilder for chaining")
+			assert.Equal(t, tt.want, string(m.bcc))
+		})
+	}
+}
+
+func TestAddBCC_MultipleAppendsWithComma(t *testing.T) {
+	m := New()
+	m.AddBCC("bcc1@example.com", "BCC One").
+		AddBCC("bcc2@example.com", "")
+
+	want := "BCC One <bcc1@example.com>, bcc2@example.com"
+	assert.Equal(t, want, string(m.bcc))
+}
