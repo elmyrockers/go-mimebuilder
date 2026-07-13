@@ -4,10 +4,12 @@
 package mimebuilder
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/valyala/bytebufferpool"
 )
 
 func TestNew(t *testing.T) {
@@ -121,3 +123,64 @@ func TestAppendSanitized_AppendsToExistingBufferWithInjection(t *testing.T) {
 	assert.Equal(t, "prefix: valueX-Injected: true", string(buf))
 }
 
+func TestQpEncode(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"simple ascii", "Hello World", "Hello World"},
+		{"empty input", "", ""},
+		{"equals sign encoded", "100% = success", "100% =3D success"},
+		{"non-ascii byte encoded", "café", "caf=C3=A9"},
+		{"tab preserved mid-line", "a\tb", "a\tb"},
+		{"newline gets hex-encoded", "line1\nline2", "line1=0Aline2"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := bytebufferpool.Get()
+			defer bytebufferpool.Put(buf)
+
+			qpEncode(buf, []byte(tt.in))
+
+			assert.Equal(t, tt.want, string(buf.B))
+		})
+	}
+}
+
+func TestQpEncode_TrailingSpaceEncoded(t *testing.T) {
+	// RFC 2045: a space immediately before a line break MUST be encoded,
+	// otherwise mail transport can silently strip it.
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	qpEncode(buf, []byte("hello \nworld"))
+
+	got := string(buf.B)
+	assert.Contains(t, got, "hello=20", "expected trailing space before newline to be encoded as =20")
+}
+
+func TestQpEncode_TrailingSpaceAtEndOfData(t *testing.T) {
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	qpEncode(buf, []byte("hello "))
+
+	got := string(buf.B)
+	assert.Equal(t, "hello=20", got, "expected trailing space at end of data to be encoded")
+}
+
+func TestQpEncode_SoftLineBreakAt72Chars(t *testing.T) {
+	// A long line of safe ASCII characters should get a soft line break
+	// ("=\r\n") inserted once lineLen reaches 72.
+	longLine := strings.Repeat("a", 100)
+
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	qpEncode(buf, []byte(longLine))
+
+	got := string(buf.B)
+	assert.Contains(t, got, "=\r\n", "expected a soft line break to be inserted for lines exceeding 72 chars")
+}
