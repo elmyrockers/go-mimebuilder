@@ -33,3 +33,76 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, 4, cap(m.attachments), "expected attachments preallocated to 4 slots")
 		assert.Equal(t, 4, cap(m.inlineImages), "expected inlineImages preallocated to 4 slots")
 }
+
+func TestStr2Bytes(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+	}{
+		{"normal ascii", "hello world"},
+		{"empty string", ""},
+		{"unicode", "héllo wörld 日本語"},
+		{"with spaces and symbols", "a b c !@#$%^&*()"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := str2bytes(tt.in)
+			assert.Equal(t, tt.in, string(b), "expected round-trip conversion to preserve content")
+			assert.Equal(t, len(tt.in), len(b), "expected byte length to match string length")
+		})
+	}
+}
+
+func TestContainsCRLF(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{"no CRLF", "hello world", false},
+		{"empty string", "", false},
+		{"contains CR", "hello\rworld", true},
+		{"contains LF", "hello\nworld", true},
+		{"contains both CRLF", "hello\r\nworld", true},
+		{"CRLF at start", "\r\nhello", true},
+		{"CRLF at end", "hello\r\n", true},
+		{"only CR", "\r", true},
+		{"only LF", "\n", true},
+		{"unicode with no CRLF", "héllo wörld", false},
+		{"tab and space only, no CRLF", "hello\tworld ok", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := containsCRLF(tt.in)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestAppendSanitized(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"clean string, fast path", "hello world", "hello world"},
+		{"empty string", "", ""},
+		{"strips CR", "hello\rworld", "helloworld"},
+		{"strips LF", "hello\nworld", "helloworld"},
+		{"strips CRLF", "hello\r\nworld", "helloworld"},
+		{"strips multiple CRLF occurrences", "a\r\nb\r\nc", "abc"},
+		{"strips leading CRLF", "\r\nhello", "hello"},
+		{"strips trailing CRLF", "hello\r\n", "hello"},
+		{"header injection attempt", "Legit Name\r\nBcc: attacker@evil.com", "Legit NameBcc: attacker@evil.com"},
+		{"unicode preserved, no CRLF", "héllo wörld 日本語", "héllo wörld 日本語"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := appendSanitized(make([]byte, 0, len(tt.in)), tt.in)
+			assert.Equal(t, tt.want, string(buf))
+		})
+	}
+}
