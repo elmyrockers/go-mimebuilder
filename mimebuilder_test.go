@@ -452,3 +452,34 @@ func TestAddBCC_MultipleAppendsWithComma(t *testing.T) {
 	want := "BCC One <bcc1@example.com>, bcc2@example.com"
 	assert.Equal(t, want, string(m.bcc))
 }
+
+func TestAddReplyTo(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		label string
+		want  string
+	}{
+		{"with display name", "reply@example.com", "Reply Person", "Reply Person <reply@example.com>"},
+		{"email only, no name", "reply@example.com", "", "reply@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New()
+			result := m.AddReplyTo(tt.email, tt.label)
+
+			assert.Same(t, m, result, "AddReplyTo should return the same *MimeBuilder for chaining")
+			assert.Equal(t, tt.want, string(m.replyTo))
+		})
+	}
+}
+
+func TestAddReplyTo_MultipleAppendsWithComma(t *testing.T) {
+	m := New()
+	m.AddReplyTo("reply1@example.com", "Reply One").
+		AddReplyTo("reply2@example.com", "")
+
+	want := "Reply One <reply1@example.com>, reply2@example.com"
+	assert.Equal(t, want, string(m.replyTo))
+}
