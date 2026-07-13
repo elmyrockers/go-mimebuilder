@@ -3,7 +3,7 @@
 [![Go Version](https://img.shields.io/badge/go1.26+-00ADD8?logo=go&logoColor=white)](https://golang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Unit Tests](https://github.com/elmyrockers/go-mimebuilder/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/elmyrockers/go-mimebuilder/actions/workflows/unit-tests.yml)
-[![Coverage](img/coverage.svg)]
+![Coverage](img/coverage.svg)
 
 <div align="center">
     <img src="img/email.jpg" width="500" />
