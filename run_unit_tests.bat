@@ -5,7 +5,7 @@ REM Runs unit tests only (no build tags, no external dependencies).
 echo Running unit tests...
 echo.
 
-go test -v -cover .
+go test -tags=unit -v -cover .
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
