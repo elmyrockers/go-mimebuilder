@@ -638,3 +638,26 @@ func TestAttach_SanitizesFilename(t *testing.T) {
 	require.Len(t, m.attachments, 1)
 	assert.Equal(t, "report.pdf", string(m.attachments[0].Filename))
 }
+
+func TestAttachReader(t *testing.T) {
+	m := New()
+	r := strings.NewReader("stream data")
+	result := m.AttachReader("stream.txt", r)
+
+	assert.Same(t, m, result, "AttachReader should return the same *MimeBuilder for chaining")
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, "stream.txt", string(m.attachments[0].Filename))
+	assert.Equal(t, r, m.attachments[0].Stream)
+	assert.Nil(t, m.attachments[0].Data)
+}
+
+func TestAttachStream_IsAliasOfAttachReader(t *testing.T) {
+	m := New()
+	r := strings.NewReader("stream data")
+	result := m.AttachStream("stream.txt", r)
+
+	assert.Same(t, m, result)
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, "stream.txt", string(m.attachments[0].Filename))
+	assert.Equal(t, r, m.attachments[0].Stream)
+}
