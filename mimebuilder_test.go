@@ -318,3 +318,34 @@ func TestEncodeBase64_AppendsToExistingBuffer(t *testing.T) {
 	got := string(buf.B)
 	assert.True(t, strings.HasPrefix(got, "prefix:"), "expected encodeBase64 to append, not overwrite existing buffer content")
 }
+
+func TestSetFrom(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		label string
+		want  string
+	}{
+		{"with display name", "john@example.com", "John Doe", "John Doe <john@example.com>"},
+		{"email only, no name", "john@example.com", "", "john@example.com"},
+		{"name with injection attempt", "john@example.com", "John\r\nBcc: evil@x.com", "JohnBcc: evil@x.com <john@example.com>"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New()
+			result := m.SetFrom(tt.email, tt.label)
+
+			assert.Same(t, m, result, "SetFrom should return the same *MimeBuilder for chaining")
+			assert.Equal(t, tt.want, string(m.from))
+		})
+	}
+}
+
+func TestSetFrom_ResetsOnSecondCall(t *testing.T) {
+	m := New()
+	m.SetFrom("first@example.com", "First")
+	m.SetFrom("second@example.com", "Second")
+
+	assert.Equal(t, "Second <second@example.com>", string(m.from), "expected SetFrom to overwrite, not append")
+}
