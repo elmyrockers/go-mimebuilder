@@ -454,6 +454,16 @@ func (m *MimeBuilder) Attach(filename string, data []byte) *MimeBuilder {
 	return m
 }
 
+func (m *MimeBuilder) AttachFile(filename string, path string) *MimeBuilder {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		m.errorList = append(m.errorList, err)
+		return m
+	}
+
+	return m.Attach(filename, data)
+}
+
 func (m *MimeBuilder) AttachReader(filename string, r io.Reader) *MimeBuilder {
 	name := appendSanitized(make([]byte, 0, len(filename)), filename)
 
@@ -821,7 +831,7 @@ func (m *MimeBuilder) Release(buf *bytebufferpool.ByteBuffer) {
 
 		- Embed(filename string, data []byte, cid string)
 		- Attach(filename string, data []byte)
-		- AttachFile( path string)
+		- AttachFile(filename string, path string)
 		- AttachReader(filename string, r io.Reader)
 		- AttachStream(filename string, r io.Reader) // alias of AttachReader()
 
