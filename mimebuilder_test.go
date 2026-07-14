@@ -4,6 +4,8 @@
 package mimebuilder
 
 import (
+	"os"
+	"path/filepath"
 	"encoding/base64"
 	"strings"
 	"testing"
@@ -704,6 +706,125 @@ func TestAttach_SanitizesFilename(t *testing.T) {
 
 	require.Len(t, m.attachments, 1)
 	assert.Equal(t, "report.pdf", string(m.attachments[0].Filename))
+}
+
+func TestAttachFile_Success(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "note.txt")
+	content := []byte("hello from disk")
+	require.NoError(t, os.WriteFile(path, content, 0644))
+
+	m := New()
+	result := m.AttachFile("note.txt", path)
+
+	assert.Same(t, m, result, "AttachFile should return the same *MimeBuilder for chaining")
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, "note.txt", string(m.attachments[0].Filename))
+	assert.Equal(t, content, m.attachments[0].Data)
+	assert.Nil(t, m.attachments[0].Stream)
+	assert.Empty(t, m.errorList, "expected no errors on successful read")
+}
+
+func TestAttachFile_CustomFilenameOverridesPathBasename(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "tmp_a8f3e2.dat")
+	require.NoError(t, os.WriteFile(path, []byte("%PDF-1.4"), 0644))
+
+	m := New()
+	m.AttachFile("invoice.pdf", path)
+
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, "invoice.pdf", string(m.attachments[0].Filename),
+		"expected AttachFile to use the given filename, not the path's basename")
+}
+
+func TestAttachFile_NestedPath(t *testing.T) {
+	dir := t.TempDir()
+	sub := filepath.Join(dir, "nested", "deeper")
+	require.NoError(t, os.MkdirAll(sub, 0755))
+	path := filepath.Join(sub, "report.pdf")
+	content := []byte("%PDF-1.4 nested content")
+	require.NoError(t, os.WriteFile(path, content, 0644))
+
+	m := New()
+	m.AttachFile("report.pdf", path)
+
+	require.Len(t, m.attachments, 1)
+	assert.Equal(t, content, m.attachments[0].Data)
+}
+
+func TestAttachFile_NonexistentPathRecordsError(t *testing.T) {
+	m := New()
+	result := m.AttachFile("missing.txt", "/nonexistent/path/does_not_exist.txt")
+
+	assert.Same(t, m, result, "AttachFile should still return the builder even on failure")
+	assert.Empty(t, m.attachments, "expected no attachment to be added on read failure")
+	require.Len(t, m.errorList, 1, "expected the read error to be recorded")
+}
+
+func TestAttachFile_MultipleCallsAccumulateErrorsIndependently(t *testing.T) {
+	dir := t.TempDir()
+	goodPath := filepath.Join(dir, "good.txt")
+	require.NoError(t, os.WriteFile(goodPath, []byte("ok"), 0644))
+
+	m := New()
+	m.AttachFile("bad1.txt", "/bad/path/one.txt")
+	m.AttachFile("good.txt", goodPath)
+	m.AttachFile("bad2.txt", "/bad/path/two.txt")
+
+	require.Len(t, m.attachments, 1, "expected only the successful AttachFile call to add an attachment")
+	assert.Equal(t, "good.txt", string(m.attachments[0].Filename))
+	assert.Len(t, m.errorList, 2, "expected two errors recorded for the two failed reads")
+}
+
+func TestAttachFile_SanitizesFilenameViaAttach(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "data.bin")
+	require.NoError(t, os.WriteFile(path, []byte("data"), 0644))
+
+	m := New()
+	m.AttachFile("weird name\r\n.txt", path)
+
+	require.Len(t, m.attachments, 1)
+	// Proves AttachFile routes through Attach()'s sanitization rather than
+	// duplicating it.
+	assert.Equal(t, "weird name.txt", string(m.attachments[0].Filename))
+}
+
+func TestAttachFile_EmptyFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "empty.txt")
+	require.NoError(t, os.WriteFile(path, []byte{}, 0644))
+
+	m := New()
+	m.AttachFile("empty.txt", path)
+
+	require.Len(t, m.attachments, 1)
+	assert.Empty(t, m.attachments[0].Data)
+	assert.Empty(t, m.errorList)
+}
+
+func TestAttachFile_IntegratesWithBuild(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "tmp_upload.bin")
+	content := []byte{0xDE, 0xAD, 0xBE, 0xEF}
+	require.NoError(t, os.WriteFile(path, content, 0644))
+
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("With File Attachment").
+		SetBody("See attached").
+		AttachFile("attachment.bin", path)
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "multipart/mixed")
+	assert.Contains(t, got, "Content-Disposition: attachment; filename=\"attachment.bin\"")
+	assert.Contains(t, got, "application/octet-stream")
 }
 
 func TestAttachReader(t *testing.T) {
