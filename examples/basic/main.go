@@ -38,6 +38,7 @@ func main() {
 					Embed( "idol.png", idolpng, "cid2" ).
 					
 					Attach( "moorish-idol.png", moorishpng ).
+					AttachFile( "idol.png", "idol.png" ).
 					Build()
 	defer builder.Release(mime)
 
