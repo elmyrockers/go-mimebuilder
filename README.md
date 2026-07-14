@@ -46,8 +46,8 @@ func main() {
 
     // 2. Chain email data and build
     // Returns a pooled buffer for 0 B/op performance
-        mime, err := builder.SetFrom("Your Name", "yourname@example.com").
-            AddTo("Helmi Aziz", "helmi@xeno.com.my").
+        mime, err := builder.SetFrom("yourname@example.com", "Your Name").
+            AddTo("helmi@xeno.com.my", "Helmi Aziz").
             SetSubject("High Performance MIME").
             SetBody("<h1>Hello!</h1><p>Sent via go-mimebuilder.</p>").AsHTML().
             SetAltBody("Hello! Sent via go-mimebuilder.").
