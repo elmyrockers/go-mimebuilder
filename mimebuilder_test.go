@@ -867,3 +867,35 @@ func TestBuild_EmptyBuilderProducesHeaderOnly(t *testing.T) {
 	assert.NotContains(t, got, "multipart")
 	assert.NotContains(t, got, "Content-Type")
 }
+
+func TestRelease_ResetsAllFields(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "From").
+		AddTo("to@example.com", "To").
+		AddCC("cc@example.com", "").
+		AddBCC("bcc@example.com", "").
+		AddReplyTo("reply@example.com", "").
+		SetSubject("Sub").
+		SetBody("Body").AsHTML().
+		SetAltBody("Alt").
+		Attach("f.txt", []byte("d")).
+		Embed("i.png", []byte("d"), "cid")
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+
+	m.Release(buf)
+
+	assert.Empty(t, m.from)
+	assert.Empty(t, m.to)
+	assert.Empty(t, m.cc)
+	assert.Empty(t, m.bcc)
+	assert.Empty(t, m.replyTo)
+	assert.Empty(t, m.subject)
+	assert.Empty(t, m.body)
+	assert.Empty(t, m.altBody)
+	assert.Empty(t, m.attachments)
+	assert.Empty(t, m.inlineImages)
+	assert.Empty(t, m.errorList)
+	assert.False(t, m.isHTML)
+}
