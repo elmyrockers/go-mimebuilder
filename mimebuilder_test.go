@@ -762,3 +762,57 @@ func TestBuild_Related_WithInlineImage(t *testing.T) {
 	assert.Contains(t, got, "Content-Disposition: inline; filename=\"logo.png\"")
 	assert.Contains(t, got, "image/png")
 }
+
+func TestBuild_Mixed_WithAttachment(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("Mixed Subject").
+		SetBody("Hello with attachment").
+		Attach("report.pdf", []byte("%PDF-1.4 fake content"))
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "multipart/mixed")
+	assert.Contains(t, got, "Content-Disposition: attachment; filename=\"report.pdf\"")
+	assert.Contains(t, got, "application/pdf")
+	assert.Contains(t, got, "Content-Transfer-Encoding: base64")
+
+	// verify the base64 payload decodes back to the original attachment content
+	idx := strings.Index(got, "Content-Disposition: attachment; filename=\"report.pdf\"")
+	require.NotEqual(t, -1, idx)
+	tail := got[idx:]
+	headerEnd := strings.Index(tail, "\r\n\r\n")
+	require.NotEqual(t, -1, headerEnd)
+	tail = tail[headerEnd+4:]
+	endIdx := strings.Index(tail, "--")
+	require.NotEqual(t, -1, endIdx)
+	b64 := strings.ReplaceAll(tail[:endIdx], "\r\n", "")
+	decoded, err := base64.StdEncoding.DecodeString(b64)
+	require.NoError(t, err)
+	assert.Equal(t, "%PDF-1.4 fake content", string(decoded))
+}
+
+func TestBuild_Mixed_WithAttachmentAndAlternativeBody(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("Full Mixed Subject").
+		SetBody("<p>HTML</p>").AsHTML().
+		SetAltBody("Plain alt").
+		Attach("file.txt", []byte("data"))
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "multipart/mixed")
+	assert.Contains(t, got, "multipart/alternative")
+	assert.Contains(t, got, "Plain alt")
+	assert.Contains(t, got, "HTML")
+	assert.Contains(t, got, "file.txt")
+}
