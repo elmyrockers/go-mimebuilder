@@ -135,3 +135,7 @@ func main() {
 >- The stress test shows the library can process **1 million requests in ~0.33 seconds**, sustaining ~2.99 million requests per second with zero allocations.
 
 ![Benchmark Test](img/benchmark.jpg)
+
+## License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
