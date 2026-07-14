@@ -284,6 +284,52 @@ func TestGetMimeType(t *testing.T) {
 	}
 }
 
+func TestGetMimeType_AllExtensions(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		want     string
+	}{
+		{"doc", "old.doc", "application/msword"},
+		{"xls", "sheet.xls", "application/vnd.ms-excel"},
+		{"ppt", "deck.ppt", "application/vnd.ms-powerpoint"},
+		{"pptx", "deck.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+		{"gif", "anim.gif", "image/gif"},
+		{"webp", "pic.webp", "image/webp"},
+		{"ico", "favicon.ico", "image/x-icon"},
+		{"htm", "page.htm", "text/html"},
+		{"html", "page.html", "text/html"},
+		{"css", "style.css", "text/css"},
+		{"js", "script.js", "text/javascript"},
+		{"rar", "archive.rar", "application/vnd.rar"},
+		{"7z", "archive.7z", "application/x-7z-compressed"},
+		{"tar", "archive.tar", "application/x-tar"},
+		{"gz", "archive.gz", "application/gzip"},
+		{"mp3", "song.mp3", "audio/mpeg"},
+		{"wav", "sound.wav", "audio/wav"},
+		{"mp4", "movie.mp4", "video/mp4"},
+		{"mpeg", "movie.mpeg", "video/mpeg"},
+		{"avi", "movie.avi", "video/x-msvideo"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getMimeType([]byte(tt.filename))
+			assert.Equal(t, tt.want, string(got))
+		})
+	}
+}
+
+func TestGetMimeType_PathWithDotInDirectory(t *testing.T) {
+	// dot appears in a directory segment before the last slash — should
+	// still resolve the extension of the actual filename correctly.
+	got := getMimeType([]byte("/my.dir/report.pdf"))
+	assert.Equal(t, "application/pdf", string(got))
+
+	got = getMimeType([]byte("C:\\my.dir\\report.docx"))
+	assert.Equal(t, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", string(got))
+}
+
 func TestEncodeBase64(t *testing.T) {
 	tests := []struct {
 		name string
