@@ -136,6 +136,8 @@ func main() {
 
 ![Benchmark Test](img/benchmark.jpg)
 
+> [View live, automated benchmark results on GitHub Actions](https://github.com/elmyrockers/go-mimebuilder/actions/workflows/benchmark.yml)
+
 ## License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
