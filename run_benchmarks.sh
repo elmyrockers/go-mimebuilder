@@ -42,6 +42,7 @@ for i in $(seq 1 "$STRESS_RUNS"); do
   echo "> Run #$i"
   go test -tags benchmark \
     -run=TestStressMillion \
+    -count=1 \
     -v \
     .
   echo
