@@ -69,6 +69,29 @@ func main() {
 }
 ```
 
+## API Reference
+
+| Method | Description |
+|---|---|
+| `New()` | Creates a new `MimeBuilder` with preallocated buffers. |
+| `SetFrom(email, name string)` | Sets the `From` header. `name` is optional. |
+| `AddTo(email, name string)` | Adds a recipient to `To`. Can be called multiple times. |
+| `AddCC(email, name string)` | Adds a recipient to `Cc`. Can be called multiple times. |
+| `AddBCC(email, name string)` | Adds a recipient to `Bcc`. Can be called multiple times. |
+| `AddReplyTo(email, name string)` | Adds an address to `Reply-To`. Can be called multiple times. |
+| `SetSubject(subject string)` | Sets the subject line (auto Q-encoded at build time). |
+| `SetBody(content string)` | Sets the primary body content (plain text by default). |
+| `AsHTML()` | Marks the body set via `SetBody` as HTML. |
+| `SetAltBody(content string)` | Sets a plain-text fallback body for HTML messages. |
+| `Embed(filename string, data []byte, cid string)` | Embeds an inline image referenced by Content-ID. |
+| `Attach(filename string, data []byte)` | Attaches a file from an in-memory byte slice. |
+| `AttachReader(filename string, r io.Reader)` | Attaches a file from an `io.Reader` stream. |
+| `AttachStream(filename string, r io.Reader)` | Alias of `AttachReader`. |
+| `AttachFile(filename string, path string)` | Reads a file from disk and attaches it under `filename`. Read errors are recorded internally, not returned. |
+| `Build()` | Builds the final MIME message into a pooled buffer. |
+| `Release(buf *bytebufferpool.ByteBuffer)` | Returns the buffer to the pool and resets builder state for reuse. |
+| `WriteTo(w io.Writer)` | Will be added soon. |
+
 ## Performance Results
 
 | Scenario                | ns/op   | B/op | allocs/op | Total Requests | Duration   | Throughput (req/sec) |
