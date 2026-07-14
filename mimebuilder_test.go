@@ -723,3 +723,42 @@ func TestBuild_HTMLOnly(t *testing.T) {
 	assert.Contains(t, got, "Hello HTML")
 	assert.NotContains(t, got, "multipart")
 }
+
+func TestBuild_Alternative(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("Alt Subject").
+		SetBody("<p>HTML body</p>").AsHTML().
+		SetAltBody("Plain fallback body")
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "multipart/alternative")
+	assert.Contains(t, got, "text/plain")
+	assert.Contains(t, got, "text/html")
+	assert.Contains(t, got, "Plain fallback body")
+	assert.Contains(t, got, "HTML body")
+}
+
+func TestBuild_Related_WithInlineImage(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("Related Subject").
+		SetBody("<p>See image: <img src=\"cid:logo\"></p>").AsHTML().
+		Embed("logo.png", []byte{0x89, 0x50, 0x4E, 0x47}, "logo")
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "multipart/related")
+	assert.Contains(t, got, "Content-ID: <logo>")
+	assert.Contains(t, got, "Content-Disposition: inline; filename=\"logo.png\"")
+	assert.Contains(t, got, "image/png")
+}
