@@ -739,6 +739,11 @@ func (m *MimeBuilder) buildAttachments( buf *bytebufferpool.ByteBuffer ){
 }
 
 func (m *MimeBuilder) Build() (*bytebufferpool.ByteBuffer, error) {
+	// Ensure there are no errors
+		if len(m.errorList)>0 {
+			return nil, m.errorList[0]
+		}
+
 	// Borrow a high-performance buffer from the pool
 		buf := bytebufferpool.Get()
 
