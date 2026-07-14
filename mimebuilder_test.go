@@ -684,3 +684,42 @@ func TestSetBoundaries_AreUniquePerCall(t *testing.T) {
 	assert.Equal(t, byte('a'), m1.altBoundary[31])
 	assert.Equal(t, byte('e'), m1.relBoundary[31])
 }
+
+func TestBuild_PlainTextOnly(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "From Person").
+		AddTo("to@example.com", "To Person").
+		SetSubject("Plain Subject").
+		SetBody("Hello plain text")
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "From: From Person <from@example.com>")
+	assert.Contains(t, got, "To: To Person <to@example.com>")
+	assert.Contains(t, got, "Subject: =?UTF-8?Q?Plain_Subject?=")
+	assert.Contains(t, got, "MIME-Version: 1.0")
+	assert.Contains(t, got, "Content-Type: text/plain; charset=UTF-8")
+	assert.Contains(t, got, "Content-Transfer-Encoding: quoted-printable")
+	assert.Contains(t, got, "Hello plain text")
+	assert.NotContains(t, got, "multipart")
+}
+
+func TestBuild_HTMLOnly(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("HTML Subject").
+		SetBody("<p>Hello HTML</p>").AsHTML()
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "Content-Type: text/html; charset=UTF-8")
+	assert.Contains(t, got, "Hello HTML")
+	assert.NotContains(t, got, "multipart")
+}
