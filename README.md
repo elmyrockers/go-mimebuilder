@@ -93,9 +93,10 @@ func main() {
 | `WriteTo(w io.Writer)` | Will be added soon. |
 
 
-#### Hot Path vs Cold Path
+## Hot Path vs Cold Path
 
 **Hot path** — called on every message build, optimized for minimal allocation (reused buffers, `str2bytes`, pooled buffers). Safe to call at high throughput.
+
 **Cold path** — either allocates freely, touches disk/IO, or is expected to run rarely (setup, error handling, one-off attachments). Not optimized for high-frequency use.
 
 | Method | Path | Why |
