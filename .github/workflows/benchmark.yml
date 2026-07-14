@@ -1,0 +1,35 @@
+# .github/workflows/benchmark.yml
+name: Benchmark
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # allows manual trigger from the Actions tab
+
+jobs:
+  benchmark:
+    name: Run Benchmarks & Stress Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.5'
+
+      - name: Verify module dependencies
+        run: go mod download
+
+      - name: Make benchmark script executable
+        run: chmod +x run_benchmarks.sh
+
+      - name: Run benchmark suite
+        run: ./run_benchmarks.sh
+        env:
+          BENCH_COUNT: 3
+          STRESS_RUNS: 3
