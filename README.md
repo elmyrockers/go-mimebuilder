@@ -119,7 +119,7 @@ func main() {
 | `AttachFile(filename string, path string) *MimeBuilder` | Cold | Performs disk I/O (`os.ReadFile`) plus allocation via `Attach`; the most expensive call in the API. |
 | `Build() (*bytebufferpool.ByteBuffer, error)` | Hot | Uses `bytebufferpool` and in-place buffer growth (e.g. `encodeBase64`'s capacity guard); designed to be called once per message but optimized to minimize allocation even with attachments. |
 | `Release(buf *bytebufferpool.ByteBuffer)` | Hot | Returns buffer to pool, resets internal slices via `[:0]` (no reallocation). |
-| `WriteTo(w io.Writer) error` | — | Unimplemented; no-op. |
+| `WriteTo(w io.Writer) error` | — | Unimplemented; Will be added later. |
 
 ## Performance Results
 
