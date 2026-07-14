@@ -398,6 +398,27 @@ func TestEncodeBase64_AppendsToExistingBuffer(t *testing.T) {
 	assert.True(t, strings.HasPrefix(got, "prefix:"), "expected encodeBase64 to append, not overwrite existing buffer content")
 }
 
+func TestEncodeBase64_GrowsBufferWhenCapacityInsufficient(t *testing.T) {
+	buf := bytebufferpool.Get()
+	defer bytebufferpool.Put(buf)
+
+	// Force a tiny starting capacity so the capacity guard's manual grow
+	// path (cap(buf.B) < currLen+maxLen) is exercised.
+	buf.B = make([]byte, 0, 4)
+	buf.Write([]byte("hdr:"))
+
+	data := []byte(strings.Repeat("z", 200))
+	encodeBase64(buf, data)
+
+	got := string(buf.B)
+	assert.True(t, strings.HasPrefix(got, "hdr:"), "expected existing content to be preserved after buffer grow")
+
+	cleaned := strings.ReplaceAll(strings.TrimPrefix(got, "hdr:"), "\r\n", "")
+	decoded, err := base64.StdEncoding.DecodeString(cleaned)
+	require.NoError(t, err)
+	assert.Equal(t, data, decoded)
+}
+
 func TestSetFrom(t *testing.T) {
 	tests := []struct {
 		name  string
