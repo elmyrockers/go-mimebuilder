@@ -816,3 +816,54 @@ func TestBuild_Mixed_WithAttachmentAndAlternativeBody(t *testing.T) {
 	assert.Contains(t, got, "HTML")
 	assert.Contains(t, got, "file.txt")
 }
+
+func TestBuild_IncludesCcBccReplyTo(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		AddCC("cc@example.com", "").
+		AddBCC("bcc@example.com", "").
+		AddReplyTo("reply@example.com", "").
+		SetSubject("Sub").
+		SetBody("Body")
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "Cc: cc@example.com")
+	assert.Contains(t, got, "Bcc: bcc@example.com")
+	assert.Contains(t, got, "Reply-To: reply@example.com")
+}
+
+func TestBuild_OmitsCcBccReplyToWhenEmpty(t *testing.T) {
+	m := New()
+	m.SetFrom("from@example.com", "").
+		AddTo("to@example.com", "").
+		SetSubject("Sub").
+		SetBody("Body")
+
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.NotContains(t, got, "Cc:")
+	assert.NotContains(t, got, "Bcc:")
+	assert.NotContains(t, got, "Reply-To:")
+}
+
+func TestBuild_EmptyBuilderProducesHeaderOnly(t *testing.T) {
+	m := New()
+	buf, err := m.Build()
+	require.NoError(t, err)
+	defer m.Release(buf)
+
+	got := buf.String()
+	assert.Contains(t, got, "From: ")
+	assert.Contains(t, got, "To: ")
+	assert.Contains(t, got, "MIME-Version: 1.0")
+	assert.NotContains(t, got, "multipart")
+	assert.NotContains(t, got, "Content-Type")
+}
