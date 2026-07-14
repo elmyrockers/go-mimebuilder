@@ -92,6 +92,33 @@ func main() {
 | `Release(buf *bytebufferpool.ByteBuffer)` | Returns the buffer to the pool and resets builder state for reuse. |
 | `WriteTo(w io.Writer)` | Will be added soon. |
 
+
+#### Hot Path vs Cold Path
+
+**Hot path** — called on every message build, optimized for minimal allocation (reused buffers, `str2bytes`, pooled buffers). Safe to call at high throughput.
+**Cold path** — either allocates freely, touches disk/IO, or is expected to run rarely (setup, error handling, one-off attachments). Not optimized for high-frequency use.
+
+| Method | Path | Why |
+|---|---|---|
+| `New()` | Cold | Called once per builder instance. |
+| `SetFrom(email, name string) *MimeBuilder` | Hot | Reuses preallocated buffer, zero-copy via `str2bytes` when input is clean. |
+| `AddTo(email, name string) *MimeBuilder` | Hot | Same as above; appends to preallocated buffer. |
+| `AddCC(email, name string) *MimeBuilder` | Hot | Same as above. |
+| `AddBCC(email, name string) *MimeBuilder` | Hot | Same as above. |
+| `AddReplyTo(email, name string) *MimeBuilder` | Hot | Same as above. |
+| `SetSubject(subject string) *MimeBuilder` | Hot | Reuses preallocated buffer; Q-encoding happens later in `Build()`. |
+| `SetBody(content string) *MimeBuilder` | Hot | Reuses preallocated 4KB buffer. |
+| `AsHTML() *MimeBuilder` | Hot | Just flips a bool. |
+| `SetAltBody(content string) *MimeBuilder` | Hot | Reuses preallocated 4KB buffer. |
+| `Embed(filename string, data []byte, cid string) *MimeBuilder` | Cold | Allocates new slices per call (`make([]byte, ...)` for filename/CID); typically called only a few times per message. |
+| `Attach(filename string, data []byte) *MimeBuilder` | Cold | Allocates a new filename slice per call; attachments are inherently occasional. |
+| `AttachReader(filename string, r io.Reader) *MimeBuilder` | Cold | Same allocation profile as `Attach`; also defers I/O to `Build()`. |
+| `AttachStream(filename string, r io.Reader) *MimeBuilder` | Cold | Alias of `AttachReader`. |
+| `AttachFile(filename string, path string) *MimeBuilder` | Cold | Performs disk I/O (`os.ReadFile`) plus allocation via `Attach`; the most expensive call in the API. |
+| `Build() (*bytebufferpool.ByteBuffer, error)` | Hot | Uses `bytebufferpool` and in-place buffer growth (e.g. `encodeBase64`'s capacity guard); designed to be called once per message but optimized to minimize allocation even with attachments. |
+| `Release(buf *bytebufferpool.ByteBuffer)` | Hot | Returns buffer to pool, resets internal slices via `[:0]` (no reallocation). |
+| `WriteTo(w io.Writer) error` | — | Unimplemented; no-op. |
+
 ## Performance Results
 
 | Scenario                | ns/op   | B/op | allocs/op | Total Requests | Duration   | Throughput (req/sec) |
