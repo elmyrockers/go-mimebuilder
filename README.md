@@ -51,7 +51,7 @@ func main() {
             SetSubject("High Performance MIME").
             SetBody("<h1>Hello!</h1><p>Sent via go-mimebuilder.</p>").AsHTML().
             SetAltBody("Hello! Sent via go-mimebuilder.").
-            Attach("document.pdf", []byte("%PDF-1.4...")).
+            AttachFile("report.pdf", "document/report_2026.pdf").
             Build()
 
         if err != nil {
